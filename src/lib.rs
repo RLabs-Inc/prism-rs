@@ -6,6 +6,7 @@ pub mod badge;
 pub mod frame;
 pub mod highlight;
 pub mod file_preview;
+pub mod markdown;
 pub mod table;
 pub mod cursor;
 pub mod list;
