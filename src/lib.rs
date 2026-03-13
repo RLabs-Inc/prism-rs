@@ -1,6 +1,7 @@
 pub mod ansi;
 pub mod error;
 pub mod style;
+pub mod unicode;
 pub mod writer;
 
 pub use error::{PrismError, PrismResult};
