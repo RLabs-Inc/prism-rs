@@ -2,7 +2,6 @@ use crate::style::s;
 use crate::writer::{ansi_enabled, writeln as wln};
 
 /// Structured CLI logging with icons and colors.
-
 pub fn info(msg: &str) {
     let icon = if ansi_enabled() { s().blue().paint("ℹ") } else { "i".to_string() };
     wln(&format!("{} {}", icon, msg));

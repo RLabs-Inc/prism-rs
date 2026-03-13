@@ -94,12 +94,12 @@ fn find_closing(chars: &[char], from: usize, marker: &str) -> Option<usize> {
 
 /// Find closing single character `closer` starting at `from`.
 fn find_closing_single(chars: &[char], from: usize, closer: char) -> Option<usize> {
-    for i in from..chars.len() {
-        if chars[i] == closer {
+    for (i, &ch) in chars.iter().enumerate().skip(from) {
+        if ch == closer {
             return Some(i);
         }
         // Don't cross newlines
-        if chars[i] == '\n' {
+        if ch == '\n' {
             return None;
         }
     }
@@ -182,22 +182,19 @@ pub fn md(text: &str) -> String {
         }
 
         // --- Headings ---
-        if line.starts_with("### ") {
-            let text = &line[4..];
+        if let Some(text) = line.strip_prefix("### ") {
             let styled = s().bold().dim().paint(&format_inline(text));
             out_lines.push(styled);
             i += 1;
             continue;
         }
-        if line.starts_with("## ") {
-            let text = &line[3..];
+        if let Some(text) = line.strip_prefix("## ") {
             let styled = s().bold().paint(&format_inline(text));
             out_lines.push(styled);
             i += 1;
             continue;
         }
-        if line.starts_with("# ") {
-            let text = &line[2..];
+        if let Some(text) = line.strip_prefix("# ") {
             let styled = s().bold().underline().paint(&format_inline(text));
             out_lines.push(styled);
             i += 1;
@@ -205,8 +202,7 @@ pub fn md(text: &str) -> String {
         }
 
         // --- Blockquote ---
-        if line.starts_with("> ") {
-            let text = &line[2..];
+        if let Some(text) = line.strip_prefix("> ") {
             let prefix = s().dim().paint("│ ");
             let content = s().italic().paint(&format_inline(text));
             out_lines.push(format!("{}{}", prefix, content));

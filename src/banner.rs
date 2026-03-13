@@ -1,19 +1,14 @@
 use crate::style::s;
 use crate::writer::ansi_enabled;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum BannerStyle {
+    #[default]
     Block,
     Shade,
     Dots,
     Ascii,
     Outline,
-}
-
-impl Default for BannerStyle {
-    fn default() -> Self {
-        BannerStyle::Block
-    }
 }
 
 #[derive(Debug, Clone)]

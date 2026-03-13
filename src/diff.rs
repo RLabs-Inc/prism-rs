@@ -8,7 +8,7 @@ pub struct DiffOptions {
 }
 
 impl DiffOptions {
-    pub fn default() -> Self {
+    pub fn new() -> Self {
         Self {
             filename: None,
             context: 3,
@@ -51,6 +51,7 @@ fn compute_lcs<'a>(old: &[&'a str], new: &[&'a str]) -> Vec<Vec<usize>> {
 }
 
 /// Backtrack LCS table to produce diff hunks.
+#[allow(clippy::too_many_arguments)]
 fn backtrack<'a>(
     dp: &[Vec<usize>],
     old: &[&'a str],
@@ -171,8 +172,8 @@ pub fn diff(old_text: &str, new_text: &str, options: &DiffOptions) -> String {
     for &ci in &changed_indices {
         let start = ci.saturating_sub(context);
         let end = (ci + context + 1).min(lines.len());
-        for idx in start..end {
-            included[idx] = true;
+        for item in included.iter_mut().take(end).skip(start) {
+            *item = true;
         }
     }
 
