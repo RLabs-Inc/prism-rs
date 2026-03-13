@@ -1,3 +1,4 @@
+pub mod activity_line;
 pub mod ansi;
 pub mod banner;
 pub mod block;
@@ -15,6 +16,7 @@ pub mod elapsed;
 pub mod error;
 pub mod log;
 pub mod progress_bar;
+pub mod section_block;
 pub mod spinner;
 pub mod statusbar;
 pub mod stream;
