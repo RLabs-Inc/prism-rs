@@ -1,6 +1,8 @@
 pub mod ansi;
 pub mod badge;
+pub mod frame;
 pub mod cursor;
+pub mod list;
 pub mod elapsed;
 pub mod error;
 pub mod log;
