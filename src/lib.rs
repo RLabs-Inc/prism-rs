@@ -4,6 +4,8 @@ pub mod cursor;
 pub mod elapsed;
 pub mod error;
 pub mod log;
+pub mod progress_bar;
+pub mod spinner;
 pub mod style;
 pub mod text;
 pub mod timer;
