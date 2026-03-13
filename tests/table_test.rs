@@ -1,5 +1,5 @@
-use prism::table::*;
 use prism::frame::BorderStyle;
+use prism::table::*;
 
 #[test]
 fn table_basic() {
@@ -23,10 +23,11 @@ fn table_empty_data() {
 
 #[test]
 fn table_double_border() {
-    let data = vec![
-        vec![("x", "1")],
-    ];
-    let opts = TableOptions { border: BorderStyle::Double, ..Default::default() };
+    let data = vec![vec![("x", "1")]];
+    let opts = TableOptions {
+        border: BorderStyle::Double,
+        ..Default::default()
+    };
     let result = table(&data, &opts);
     assert!(result.contains("║"));
     assert!(result.contains("═"));
@@ -34,14 +35,23 @@ fn table_double_border() {
 
 #[test]
 fn table_column_alignment() {
-    let data = vec![
-        vec![("left", "L"), ("right", "R")],
-    ];
+    let data = vec![vec![("left", "L"), ("right", "R")]];
     let columns = vec![
-        Column { key: "left".to_string(), align: Align::Left, ..Default::default() },
-        Column { key: "right".to_string(), align: Align::Right, ..Default::default() },
+        Column {
+            key: "left".to_string(),
+            align: Align::Left,
+            ..Default::default()
+        },
+        Column {
+            key: "right".to_string(),
+            align: Align::Right,
+            ..Default::default()
+        },
     ];
-    let opts = TableOptions { columns: Some(columns), ..Default::default() };
+    let opts = TableOptions {
+        columns: Some(columns),
+        ..Default::default()
+    };
     let result = table(&data, &opts);
     assert!(!result.is_empty());
 }

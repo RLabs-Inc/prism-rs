@@ -20,27 +20,59 @@ pub struct BorderChars {
 }
 
 static SINGLE: BorderChars = BorderChars {
-    tl: "┌", tr: "┐", bl: "└", br: "┘",
-    h: "─", v: "│",
-    lt: "├", rt: "┤", tt: "┬", bt: "┴", cross: "┼",
+    tl: "┌",
+    tr: "┐",
+    bl: "└",
+    br: "┘",
+    h: "─",
+    v: "│",
+    lt: "├",
+    rt: "┤",
+    tt: "┬",
+    bt: "┴",
+    cross: "┼",
 };
 
 static DOUBLE: BorderChars = BorderChars {
-    tl: "╔", tr: "╗", bl: "╚", br: "╝",
-    h: "═", v: "║",
-    lt: "╠", rt: "╣", tt: "╦", bt: "╩", cross: "╬",
+    tl: "╔",
+    tr: "╗",
+    bl: "╚",
+    br: "╝",
+    h: "═",
+    v: "║",
+    lt: "╠",
+    rt: "╣",
+    tt: "╦",
+    bt: "╩",
+    cross: "╬",
 };
 
 static ROUNDED: BorderChars = BorderChars {
-    tl: "╭", tr: "╮", bl: "╰", br: "╯",
-    h: "─", v: "│",
-    lt: "├", rt: "┤", tt: "┬", bt: "┴", cross: "┼",
+    tl: "╭",
+    tr: "╮",
+    bl: "╰",
+    br: "╯",
+    h: "─",
+    v: "│",
+    lt: "├",
+    rt: "┤",
+    tt: "┬",
+    bt: "┴",
+    cross: "┼",
 };
 
 static HEAVY: BorderChars = BorderChars {
-    tl: "┏", tr: "┓", bl: "┗", br: "┛",
-    h: "━", v: "┃",
-    lt: "┣", rt: "┫", tt: "┳", bt: "┻", cross: "╋",
+    tl: "┏",
+    tr: "┓",
+    bl: "┗",
+    br: "┛",
+    h: "━",
+    v: "┃",
+    lt: "┣",
+    rt: "┫",
+    tt: "┳",
+    bt: "┻",
+    cross: "╋",
 };
 
 // ---------------------------------------------------------------------------
@@ -115,10 +147,7 @@ pub fn frame(content: &str, options: &FrameOptions) -> String {
     let h_fill = inner_width + 2 * pad; // number of h chars between corners
     let top_line = match &options.title {
         None => {
-            format!("{}{}{}\n",
-                bc.tl,
-                bc.h.repeat(h_fill),
-                bc.tr)
+            format!("{}{}{}\n", bc.tl, bc.h.repeat(h_fill), bc.tr)
         }
         Some(title) => {
             // Layout: TL h* space title space h* TR
@@ -128,22 +157,19 @@ pub fn frame(content: &str, options: &FrameOptions) -> String {
             let title_section = title_vis + 2;
             if title_section + 2 > h_fill {
                 // Title wider than available — just put it without leading/trailing dashes
-                format!("{}{} {} {}{}\n",
-                    bc.tl,
-                    bc.h,
-                    title,
-                    bc.h,
-                    bc.tr)
+                format!("{}{} {} {}{}\n", bc.tl, bc.h, title, bc.h, bc.tr)
             } else {
                 let remaining = h_fill.saturating_sub(title_section);
                 let left_dashes = remaining / 2;
                 let right_dashes = remaining - left_dashes;
-                format!("{}{} {} {}{}\n",
+                format!(
+                    "{}{} {} {}{}\n",
                     bc.tl,
                     bc.h.repeat(left_dashes),
                     title,
                     bc.h.repeat(right_dashes),
-                    bc.tr)
+                    bc.tr
+                )
             }
         }
     };
@@ -158,20 +184,14 @@ pub fn frame(content: &str, options: &FrameOptions) -> String {
         } else {
             String::new()
         };
-        out.push_str(&format!("{}{}{}{}{}{}\n",
-            bc.v,
-            pad_str,
-            line,
-            right_pad,
-            pad_str,
-            bc.v));
+        out.push_str(&format!(
+            "{}{}{}{}{}{}\n",
+            bc.v, pad_str, line, right_pad, pad_str, bc.v
+        ));
     }
 
     // --- Bottom border ---
-    out.push_str(&format!("{}{}{}\n",
-        bc.bl,
-        bc.h.repeat(h_fill),
-        bc.br));
+    out.push_str(&format!("{}{}{}\n", bc.bl, bc.h.repeat(h_fill), bc.br));
 
     out
 }

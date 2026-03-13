@@ -206,7 +206,7 @@ fn wrap_line(line: &str, width: usize) -> String {
 
     let mut out = String::with_capacity(line.len() + 16);
     let mut col: usize = 0; // current column position on this output line
-    // Active style sequences (re-emitted after a line break)
+                            // Active style sequences (re-emitted after a line break)
     let mut active_styles: Vec<String> = Vec::new();
 
     // We process word-by-word. First collect words as (visible_width, raw_string) pairs.
@@ -234,7 +234,15 @@ fn wrap_line(line: &str, width: usize) -> String {
                 if first_word_on_line {
                     // First word on the line — always emit (hard-break if needed)
                     let styles_snapshot = active_styles.clone();
-                    emit_word_hard_break(&mut out, content, *vis_width, width, &mut col, &mut active_styles, &styles_snapshot);
+                    emit_word_hard_break(
+                        &mut out,
+                        content,
+                        *vis_width,
+                        width,
+                        &mut col,
+                        &mut active_styles,
+                        &styles_snapshot,
+                    );
                     first_word_on_line = false;
                 } else {
                     // Would this word fit on the current line?
@@ -256,7 +264,15 @@ fn wrap_line(line: &str, width: usize) -> String {
                             out.push_str(s);
                         }
                         // Now emit the word (may need hard-break if word itself > width)
-                        emit_word_hard_break(&mut out, content, *vis_width, width, &mut col, &mut active_styles, &styles_snapshot);
+                        emit_word_hard_break(
+                            &mut out,
+                            content,
+                            *vis_width,
+                            width,
+                            &mut col,
+                            &mut active_styles,
+                            &styles_snapshot,
+                        );
                         first_word_on_line = false;
                     }
                 }
@@ -353,7 +369,10 @@ enum WordToken {
 #[derive(Debug)]
 enum WordChunk {
     Spaces(usize),
-    Word { vis_width: usize, content: Vec<WordToken> },
+    Word {
+        vis_width: usize,
+        content: Vec<WordToken>,
+    },
 }
 
 /// Collect tokens into a sequence of `WordChunk`s.
@@ -398,7 +417,10 @@ fn collect_words(tokens: &[Token]) -> Vec<WordChunk> {
                         _ => break,
                     }
                 }
-                chunks.push(WordChunk::Word { vis_width, content: word_tokens });
+                chunks.push(WordChunk::Word {
+                    vis_width,
+                    content: word_tokens,
+                });
             }
         }
     }

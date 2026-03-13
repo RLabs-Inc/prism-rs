@@ -48,42 +48,102 @@ impl Style {
     }
 
     // Modifiers
-    pub fn bold(self) -> Self { self.push("\x1b[1m", "\x1b[22m") }
-    pub fn dim(self) -> Self { self.push("\x1b[2m", "\x1b[22m") }
-    pub fn italic(self) -> Self { self.push("\x1b[3m", "\x1b[23m") }
-    pub fn underline(self) -> Self { self.push("\x1b[4m", "\x1b[24m") }
-    pub fn inverse(self) -> Self { self.push("\x1b[7m", "\x1b[27m") }
-    pub fn strikethrough(self) -> Self { self.push("\x1b[9m", "\x1b[29m") }
+    pub fn bold(self) -> Self {
+        self.push("\x1b[1m", "\x1b[22m")
+    }
+    pub fn dim(self) -> Self {
+        self.push("\x1b[2m", "\x1b[22m")
+    }
+    pub fn italic(self) -> Self {
+        self.push("\x1b[3m", "\x1b[23m")
+    }
+    pub fn underline(self) -> Self {
+        self.push("\x1b[4m", "\x1b[24m")
+    }
+    pub fn inverse(self) -> Self {
+        self.push("\x1b[7m", "\x1b[27m")
+    }
+    pub fn strikethrough(self) -> Self {
+        self.push("\x1b[9m", "\x1b[29m")
+    }
 
     // Foreground ANSI 16 (terminal-themed)
-    pub fn black(self) -> Self { self.push("\x1b[30m", "\x1b[39m") }
-    pub fn red(self) -> Self { self.push("\x1b[31m", "\x1b[39m") }
-    pub fn green(self) -> Self { self.push("\x1b[32m", "\x1b[39m") }
-    pub fn yellow(self) -> Self { self.push("\x1b[33m", "\x1b[39m") }
-    pub fn blue(self) -> Self { self.push("\x1b[34m", "\x1b[39m") }
-    pub fn magenta(self) -> Self { self.push("\x1b[35m", "\x1b[39m") }
-    pub fn cyan(self) -> Self { self.push("\x1b[36m", "\x1b[39m") }
-    pub fn white(self) -> Self { self.push("\x1b[37m", "\x1b[39m") }
-    pub fn gray(self) -> Self { self.push("\x1b[90m", "\x1b[39m") }
+    pub fn black(self) -> Self {
+        self.push("\x1b[30m", "\x1b[39m")
+    }
+    pub fn red(self) -> Self {
+        self.push("\x1b[31m", "\x1b[39m")
+    }
+    pub fn green(self) -> Self {
+        self.push("\x1b[32m", "\x1b[39m")
+    }
+    pub fn yellow(self) -> Self {
+        self.push("\x1b[33m", "\x1b[39m")
+    }
+    pub fn blue(self) -> Self {
+        self.push("\x1b[34m", "\x1b[39m")
+    }
+    pub fn magenta(self) -> Self {
+        self.push("\x1b[35m", "\x1b[39m")
+    }
+    pub fn cyan(self) -> Self {
+        self.push("\x1b[36m", "\x1b[39m")
+    }
+    pub fn white(self) -> Self {
+        self.push("\x1b[37m", "\x1b[39m")
+    }
+    pub fn gray(self) -> Self {
+        self.push("\x1b[90m", "\x1b[39m")
+    }
 
     // Bright foreground ANSI 16
-    pub fn bright_red(self) -> Self { self.push("\x1b[91m", "\x1b[39m") }
-    pub fn bright_green(self) -> Self { self.push("\x1b[92m", "\x1b[39m") }
-    pub fn bright_yellow(self) -> Self { self.push("\x1b[93m", "\x1b[39m") }
-    pub fn bright_blue(self) -> Self { self.push("\x1b[94m", "\x1b[39m") }
-    pub fn bright_magenta(self) -> Self { self.push("\x1b[95m", "\x1b[39m") }
-    pub fn bright_cyan(self) -> Self { self.push("\x1b[96m", "\x1b[39m") }
-    pub fn bright_white(self) -> Self { self.push("\x1b[97m", "\x1b[39m") }
+    pub fn bright_red(self) -> Self {
+        self.push("\x1b[91m", "\x1b[39m")
+    }
+    pub fn bright_green(self) -> Self {
+        self.push("\x1b[92m", "\x1b[39m")
+    }
+    pub fn bright_yellow(self) -> Self {
+        self.push("\x1b[93m", "\x1b[39m")
+    }
+    pub fn bright_blue(self) -> Self {
+        self.push("\x1b[94m", "\x1b[39m")
+    }
+    pub fn bright_magenta(self) -> Self {
+        self.push("\x1b[95m", "\x1b[39m")
+    }
+    pub fn bright_cyan(self) -> Self {
+        self.push("\x1b[96m", "\x1b[39m")
+    }
+    pub fn bright_white(self) -> Self {
+        self.push("\x1b[97m", "\x1b[39m")
+    }
 
     // Background ANSI 16
-    pub fn bg_black(self) -> Self { self.push("\x1b[40m", "\x1b[49m") }
-    pub fn bg_red(self) -> Self { self.push("\x1b[41m", "\x1b[49m") }
-    pub fn bg_green(self) -> Self { self.push("\x1b[42m", "\x1b[49m") }
-    pub fn bg_yellow(self) -> Self { self.push("\x1b[43m", "\x1b[49m") }
-    pub fn bg_blue(self) -> Self { self.push("\x1b[44m", "\x1b[49m") }
-    pub fn bg_magenta(self) -> Self { self.push("\x1b[45m", "\x1b[49m") }
-    pub fn bg_cyan(self) -> Self { self.push("\x1b[46m", "\x1b[49m") }
-    pub fn bg_white(self) -> Self { self.push("\x1b[47m", "\x1b[49m") }
+    pub fn bg_black(self) -> Self {
+        self.push("\x1b[40m", "\x1b[49m")
+    }
+    pub fn bg_red(self) -> Self {
+        self.push("\x1b[41m", "\x1b[49m")
+    }
+    pub fn bg_green(self) -> Self {
+        self.push("\x1b[42m", "\x1b[49m")
+    }
+    pub fn bg_yellow(self) -> Self {
+        self.push("\x1b[43m", "\x1b[49m")
+    }
+    pub fn bg_blue(self) -> Self {
+        self.push("\x1b[44m", "\x1b[49m")
+    }
+    pub fn bg_magenta(self) -> Self {
+        self.push("\x1b[45m", "\x1b[49m")
+    }
+    pub fn bg_cyan(self) -> Self {
+        self.push("\x1b[46m", "\x1b[49m")
+    }
+    pub fn bg_white(self) -> Self {
+        self.push("\x1b[47m", "\x1b[49m")
+    }
 
     // Exact colors via RGB/Hex
     pub fn fg(self, color: Color) -> Self {

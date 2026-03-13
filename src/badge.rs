@@ -20,7 +20,12 @@ pub fn badge(text: &str, variant: BadgeVariant, color_fn: Option<fn(&str) -> Str
     }
 
     match variant {
-        BadgeVariant::Bracket => format!("{}{}{}", s().dim().paint("["), color(text), s().dim().paint("]")),
+        BadgeVariant::Bracket => format!(
+            "{}{}{}",
+            s().dim().paint("["),
+            color(text),
+            s().dim().paint("]")
+        ),
         BadgeVariant::Dot => format!("{} {}", color("●"), text),
         BadgeVariant::Pill => color(&format!(" {} ", text)),
     }

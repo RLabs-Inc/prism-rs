@@ -11,7 +11,10 @@ fn list_bullet_default() {
 
 #[test]
 fn list_numbered() {
-    let opts = ListOptions { style: ListStyle::Numbered, ..Default::default() };
+    let opts = ListOptions {
+        style: ListStyle::Numbered,
+        ..Default::default()
+    };
     let result = list(&["first", "second"], &opts);
     assert!(result.contains("1."));
     assert!(result.contains("2."));
@@ -19,7 +22,10 @@ fn list_numbered() {
 
 #[test]
 fn list_alpha() {
-    let opts = ListOptions { style: ListStyle::Alpha, ..Default::default() };
+    let opts = ListOptions {
+        style: ListStyle::Alpha,
+        ..Default::default()
+    };
     let result = list(&["one", "two"], &opts);
     assert!(result.contains("a."));
     assert!(result.contains("b."));
@@ -27,7 +33,10 @@ fn list_alpha() {
 
 #[test]
 fn list_arrow() {
-    let opts = ListOptions { style: ListStyle::Arrow, ..Default::default() };
+    let opts = ListOptions {
+        style: ListStyle::Arrow,
+        ..Default::default()
+    };
     let result = list(&["item"], &opts);
     assert!(result.contains("→"));
 }
@@ -54,10 +63,10 @@ fn kv_aligned_keys() {
 #[test]
 fn tree_basic() {
     let data = vec![
-        TreeNode::dir("src", vec![
-            TreeNode::file("main.rs"),
-            TreeNode::file("lib.rs"),
-        ]),
+        TreeNode::dir(
+            "src",
+            vec![TreeNode::file("main.rs"), TreeNode::file("lib.rs")],
+        ),
         TreeNode::file("Cargo.toml"),
     ];
     let result = tree(&data);

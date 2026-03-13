@@ -70,7 +70,10 @@ impl Stopwatch {
         let lap_label = format!(
             "Lap {}{}",
             self.lap_count,
-            self.label.as_deref().map(|l| format!(" [{}]", l)).unwrap_or_default()
+            self.label
+                .as_deref()
+                .map(|l| format!(" [{}]", l))
+                .unwrap_or_default()
         );
         let time_str = format_time(lap_ms);
         writeln(&format!(
@@ -259,7 +262,11 @@ pub fn bench(name: &str, f: impl Fn(), iterations: u64) -> BenchResult {
     let elapsed = start.elapsed();
     let total_ms = elapsed.as_millis() as u64;
     let total_us = elapsed.as_micros() as f64;
-    let avg_us = if iterations > 0 { total_us / iterations as f64 } else { 0.0 };
+    let avg_us = if iterations > 0 {
+        total_us / iterations as f64
+    } else {
+        0.0
+    };
     let ops_per_sec = if total_us > 0.0 {
         (iterations as f64 / total_us) * 1_000_000.0
     } else {

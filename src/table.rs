@@ -1,7 +1,7 @@
-use crate::frame::BorderStyle;
 use crate::ansi::measure_width;
-use crate::text::truncate;
+use crate::frame::BorderStyle;
 use crate::style::s;
+use crate::text::truncate;
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -92,14 +92,16 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
     // --- 1. Determine columns ---
     // If caller specified columns, use them; otherwise collect unique keys from data.
     let columns: Vec<Column> = if let Some(cols) = &opts.columns {
-        cols.iter().map(|c| Column {
-            key: c.key.clone(),
-            label: c.label.clone(),
-            align: c.align,
-            width: c.width,
-            min_width: c.min_width,
-            max_width: c.max_width,
-        }).collect()
+        cols.iter()
+            .map(|c| Column {
+                key: c.key.clone(),
+                label: c.label.clone(),
+                align: c.align,
+                width: c.width,
+                min_width: c.min_width,
+                max_width: c.max_width,
+            })
+            .collect()
     } else {
         // Collect unique keys preserving first-seen order
         let mut keys: Vec<String> = Vec::new();
@@ -111,10 +113,12 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
                 }
             }
         }
-        keys.into_iter().map(|k| Column {
-            key: k,
-            ..Default::default()
-        }).collect()
+        keys.into_iter()
+            .map(|k| Column {
+                key: k,
+                ..Default::default()
+            })
+            .collect()
     };
 
     if columns.is_empty() {
@@ -133,34 +137,43 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
     };
 
     // --- 3. Determine column labels ---
-    let labels: Vec<String> = columns.iter().map(|c| {
-        c.label.clone().unwrap_or_else(|| c.key.clone())
-    }).collect();
+    let labels: Vec<String> = columns
+        .iter()
+        .map(|c| c.label.clone().unwrap_or_else(|| c.key.clone()))
+        .collect();
 
     // --- 4. Calculate natural column widths ---
-    let mut col_widths: Vec<usize> = columns.iter().enumerate().map(|(ci, col)| {
-        // Start with header width
-        let mut w = measure_width(&labels[ci]);
-        // Expand for each cell
-        for ri in 0..data.len() {
-            let val = cell_value(ri, &col.key);
-            let vw = measure_width(val);
-            if vw > w {
-                w = vw;
+    let mut col_widths: Vec<usize> = columns
+        .iter()
+        .enumerate()
+        .map(|(ci, col)| {
+            // Start with header width
+            let mut w = measure_width(&labels[ci]);
+            // Expand for each cell
+            for ri in 0..data.len() {
+                let val = cell_value(ri, &col.key);
+                let vw = measure_width(val);
+                if vw > w {
+                    w = vw;
+                }
             }
-        }
-        // Apply explicit width constraints
-        if let Some(fixed) = col.width {
-            return fixed;
-        }
-        if let Some(mn) = col.min_width {
-            if w < mn { w = mn; }
-        }
-        if let Some(mx) = col.max_width {
-            if w > mx { w = mx; }
-        }
-        w
-    }).collect();
+            // Apply explicit width constraints
+            if let Some(fixed) = col.width {
+                return fixed;
+            }
+            if let Some(mn) = col.min_width {
+                if w < mn {
+                    w = mn;
+                }
+            }
+            if let Some(mx) = col.max_width {
+                if w > mx {
+                    w = mx;
+                }
+            }
+            w
+        })
+        .collect();
 
     // --- 5. Shrink columns to fit max_width ---
     // Total visible width = sum(col_widths) + (ncols+1) borders + 2 spaces padding per col
@@ -179,7 +192,9 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
             break;
         }
         // Find the widest column
-        let (widest_idx, &widest_val) = col_widths.iter().enumerate()
+        let (widest_idx, &widest_val) = col_widths
+            .iter()
+            .enumerate()
             .max_by_key(|(_, &w)| w)
             .unwrap();
         if widest_val == 0 {
@@ -277,9 +292,7 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
     out.push_str(&top_border);
 
     // Header row — bold labels
-    let header_cells: Vec<String> = labels.iter().map(|label| {
-        s().bold().paint(label)
-    }).collect();
+    let header_cells: Vec<String> = labels.iter().map(|label| s().bold().paint(label)).collect();
     let header_aligns: Vec<Align> = columns.iter().map(|_| Align::Left).collect();
     out.push_str(&render_row(&header_cells, &header_aligns));
 
@@ -289,9 +302,10 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
     // Data rows
     let data_aligns: Vec<Align> = columns.iter().map(|c| c.align).collect();
     for ri in 0..data.len() {
-        let cells: Vec<String> = columns.iter().map(|col| {
-            cell_value(ri, &col.key).to_string()
-        }).collect();
+        let cells: Vec<String> = columns
+            .iter()
+            .map(|col| cell_value(ri, &col.key).to_string())
+            .collect();
         out.push_str(&render_row(&cells, &data_aligns));
     }
 

@@ -22,7 +22,11 @@ fn add_creates_items_with_connector() {
     let plain1 = strip_ansi(&lines[1]);
     assert!(plain1.contains("item one"), "got: {}", plain1);
     // Connector ⎿ should be present
-    assert!(plain1.contains("\u{23BF}"), "expected connector, got: {}", plain1);
+    assert!(
+        plain1.contains("\u{23BF}"),
+        "expected connector, got: {}",
+        plain1
+    );
     let plain2 = strip_ansi(&lines[2]);
     assert!(plain2.contains("item two"), "got: {}", plain2);
 }
@@ -50,10 +54,13 @@ fn body_empty_clears_items() {
 
 #[test]
 fn freeze_with_collapse_hides_items() {
-    let mut sb = SectionBlock::new("Building", SectionBlockOptions {
-        collapse_on_done: true,
-        ..SectionBlockOptions::default()
-    });
+    let mut sb = SectionBlock::new(
+        "Building",
+        SectionBlockOptions {
+            collapse_on_done: true,
+            ..SectionBlockOptions::default()
+        },
+    );
     sb.add("step 1");
     sb.add("step 2");
     let lines = sb.freeze("✓", None, None);
@@ -108,11 +115,14 @@ fn title_and_text_update_message() {
 
 #[test]
 fn custom_indent_and_connector() {
-    let mut sb = SectionBlock::new("Title", SectionBlockOptions {
-        indent: 4,
-        connector: "|".to_string(),
-        ..SectionBlockOptions::default()
-    });
+    let mut sb = SectionBlock::new(
+        "Title",
+        SectionBlockOptions {
+            indent: 4,
+            connector: "|".to_string(),
+            ..SectionBlockOptions::default()
+        },
+    );
     sb.add("child");
     let lines = sb.render();
     let plain0 = strip_ansi(&lines[0]);
@@ -123,10 +133,13 @@ fn custom_indent_and_connector() {
 
 #[test]
 fn interval_ms_from_spinner() {
-    let sb = SectionBlock::new("test", SectionBlockOptions {
-        spinner: "star",
-        ..SectionBlockOptions::default()
-    });
+    let sb = SectionBlock::new(
+        "test",
+        SectionBlockOptions {
+            spinner: "star",
+            ..SectionBlockOptions::default()
+        },
+    );
     assert_eq!(sb.interval_ms(), 100);
 }
 

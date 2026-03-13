@@ -1,4 +1,4 @@
-use prism::ansi::{strip_ansi, measure_width, wrap_ansi};
+use prism::ansi::{measure_width, strip_ansi, wrap_ansi};
 
 // strip_ansi tests
 #[test]
@@ -13,12 +13,18 @@ fn strip_csi_sequence() {
 
 #[test]
 fn strip_multiple_sequences() {
-    assert_eq!(strip_ansi("\x1b[1m\x1b[31mbold red\x1b[39m\x1b[22m"), "bold red");
+    assert_eq!(
+        strip_ansi("\x1b[1m\x1b[31mbold red\x1b[39m\x1b[22m"),
+        "bold red"
+    );
 }
 
 #[test]
 fn strip_osc_hyperlink() {
-    assert_eq!(strip_ansi("\x1b]8;;https://example.com\x07link\x1b]8;;\x07"), "link");
+    assert_eq!(
+        strip_ansi("\x1b]8;;https://example.com\x07link\x1b]8;;\x07"),
+        "link"
+    );
 }
 
 #[test]

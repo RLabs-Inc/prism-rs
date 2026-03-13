@@ -22,7 +22,10 @@ pub struct ListOptions {
 
 impl Default for ListOptions {
     fn default() -> Self {
-        Self { style: ListStyle::Bullet, indent: 0 }
+        Self {
+            style: ListStyle::Bullet,
+            indent: 0,
+        }
     }
 }
 
@@ -87,7 +90,10 @@ pub struct KvOptions {
 
 impl Default for KvOptions {
     fn default() -> Self {
-        Self { separator: "  ".to_string(), indent: 0 }
+        Self {
+            separator: "  ".to_string(),
+            indent: 0,
+        }
     }
 }
 
@@ -112,7 +118,10 @@ pub fn kv(pairs: &[(&str, &str)], options: &KvOptions) -> String {
             let key_width = measure_width(key);
             let padding = " ".repeat(max_key_width - key_width);
             let styled_key = s().bold().paint(key);
-            format!("{}{}{}{}{}", indent, styled_key, padding, options.separator, val)
+            format!(
+                "{}{}{}{}{}",
+                indent, styled_key, padding, options.separator, val
+            )
         })
         .collect();
 

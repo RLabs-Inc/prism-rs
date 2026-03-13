@@ -6,9 +6,7 @@
 use std::sync::{Arc, Mutex};
 
 use crate::ansi;
-use crate::live::{
-    self, Activity, ActivityOptions, FooterConfig, Section, SectionOptions,
-};
+use crate::live::{self, Activity, ActivityOptions, FooterConfig, Section, SectionOptions};
 use crate::stream::{self, LayoutPrint, Stream, StreamOptions};
 use crate::writer;
 
@@ -529,7 +527,11 @@ impl Layout {
         }
         drop(inner);
 
-        let tty = if self.tty_mode { Some(true) } else { Some(false) };
+        let tty = if self.tty_mode {
+            Some(true)
+        } else {
+            Some(false)
+        };
 
         stream::stream_with(StreamOptions {
             layout: Some(Box::new(LayoutPrinter {
@@ -639,8 +641,6 @@ pub fn layout(options: Option<LayoutOptions>) -> Layout {
             live_active: 0,
         })),
         tty_mode,
-        on_close: Arc::new(Mutex::new(
-            opts.on_close,
-        )),
+        on_close: Arc::new(Mutex::new(opts.on_close)),
     }
 }

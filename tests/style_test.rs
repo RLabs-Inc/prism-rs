@@ -1,4 +1,4 @@
-use prism::style::{s, rgb, hex, RESET};
+use prism::style::{hex, rgb, s, RESET};
 
 #[test]
 fn style_paint_no_modifiers() {

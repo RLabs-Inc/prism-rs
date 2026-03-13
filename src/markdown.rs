@@ -234,7 +234,11 @@ pub fn md(text: &str) -> String {
             while num_end < lchars.len() && lchars[num_end].is_ascii_digit() {
                 num_end += 1;
             }
-            if num_end > 0 && num_end + 1 < lchars.len() && lchars[num_end] == '.' && lchars[num_end + 1] == ' ' {
+            if num_end > 0
+                && num_end + 1 < lchars.len()
+                && lchars[num_end] == '.'
+                && lchars[num_end + 1] == ' '
+            {
                 let num_part: String = lchars[..num_end].iter().collect();
                 let text_part: String = lchars[num_end + 2..].iter().collect();
                 let marker = s().dim().paint(&format!("{}. ", num_part));

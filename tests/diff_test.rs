@@ -27,7 +27,14 @@ fn diff_removed_line() {
 #[test]
 fn diff_with_filename() {
     std::env::set_var("FORCE_COLOR", "1");
-    let result = diff("a", "b", &DiffOptions { filename: Some("test.rs".to_string()), ..Default::default() });
+    let result = diff(
+        "a",
+        "b",
+        &DiffOptions {
+            filename: Some("test.rs".to_string()),
+            ..Default::default()
+        },
+    );
     assert!(result.contains("test.rs"));
     std::env::remove_var("FORCE_COLOR");
 }

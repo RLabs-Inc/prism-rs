@@ -1,5 +1,5 @@
-use std::time::Instant;
 use crate::timer::format_time;
+use std::time::Instant;
 
 /// Pure elapsed timer state machine. Zero I/O.
 pub struct Elapsed {
@@ -8,7 +8,9 @@ pub struct Elapsed {
 
 impl Elapsed {
     pub fn new() -> Self {
-        Self { start: Instant::now() }
+        Self {
+            start: Instant::now(),
+        }
     }
 
     /// Formatted elapsed: "42ms", "1.2s", "3m 12s"

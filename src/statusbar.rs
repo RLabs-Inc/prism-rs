@@ -59,7 +59,6 @@ pub struct StatusBarConfig {
     pub separator_color: Option<fn(&str) -> String>,
 }
 
-
 /// Render a status bar using the current terminal state (TTY detection + width).
 ///
 /// For non-TTY output, segments are joined plainly without styling.
@@ -76,9 +75,7 @@ pub fn statusbar(config: &StatusBarConfig) -> String {
 pub fn statusbar_render(config: &StatusBarConfig, total_width: usize) -> String {
     let indent = config.indent.unwrap_or(2);
     let separator = config.separator.as_deref().unwrap_or(" \u{2502} "); // " │ "
-    let sep_color: fn(&str) -> String = config
-        .separator_color
-        .unwrap_or(|t| s().dim().render(t));
+    let sep_color: fn(&str) -> String = config.separator_color.unwrap_or(|t| s().dim().render(t));
 
     let pad = " ".repeat(indent);
     let styled_sep = sep_color(separator);
@@ -86,7 +83,11 @@ pub fn statusbar_render(config: &StatusBarConfig, total_width: usize) -> String 
     let left_parts: Vec<String> = config.left.iter().map(|seg| seg.resolve()).collect();
     let left_str = left_parts.join(&styled_sep);
 
-    let right_str = config.right.as_ref().map(|seg| seg.resolve()).unwrap_or_default();
+    let right_str = config
+        .right
+        .as_ref()
+        .map(|seg| seg.resolve())
+        .unwrap_or_default();
 
     let available_width = total_width.saturating_sub(indent);
 
@@ -102,9 +103,17 @@ pub fn statusbar_render(config: &StatusBarConfig, total_width: usize) -> String 
     let max_left_width = available_width.saturating_sub(right_width + 1);
     let left_display = truncate(&left_str, max_left_width, "…");
     let left_width = measure_width(&left_display);
-    let fill_width = available_width.saturating_sub(left_width + right_width).max(1);
+    let fill_width = available_width
+        .saturating_sub(left_width + right_width)
+        .max(1);
 
-    format!("{}{}{}{}", pad, left_display, " ".repeat(fill_width), right_str)
+    format!(
+        "{}{}{}{}",
+        pad,
+        left_display,
+        " ".repeat(fill_width),
+        right_str
+    )
 }
 
 /// Plain-text rendering for non-TTY output (no styling, no fill).

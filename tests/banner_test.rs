@@ -12,8 +12,17 @@ fn banner_basic() {
 #[test]
 fn banner_all_styles() {
     std::env::set_var("FORCE_COLOR", "1");
-    for style in [BannerStyle::Block, BannerStyle::Shade, BannerStyle::Dots, BannerStyle::Ascii, BannerStyle::Outline] {
-        let opts = BannerOptions { style, ..Default::default() };
+    for style in [
+        BannerStyle::Block,
+        BannerStyle::Shade,
+        BannerStyle::Dots,
+        BannerStyle::Ascii,
+        BannerStyle::Outline,
+    ] {
+        let opts = BannerOptions {
+            style,
+            ..Default::default()
+        };
         let result = banner("A", &opts);
         assert!(!result.is_empty());
     }

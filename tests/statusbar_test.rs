@@ -1,5 +1,5 @@
-use prism::statusbar::*;
 use prism::ansi::measure_width;
+use prism::statusbar::*;
 
 #[test]
 fn statusbar_left_only() {

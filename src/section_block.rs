@@ -165,7 +165,10 @@ impl SectionBlock {
             None => (self.color_fn)(self.frames[self.idx % self.frames.len()]),
         };
         let timer_str = self.timer_str();
-        lines.push(format!("{}{} {}{}", self.pad, icon_str, self.msg, timer_str));
+        lines.push(format!(
+            "{}{} {}{}",
+            self.pad, icon_str, self.msg, timer_str
+        ));
         for item in &self.items {
             lines.push(format!(
                 "{}{}  {}",

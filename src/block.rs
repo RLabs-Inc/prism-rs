@@ -1,8 +1,8 @@
 // prism/block - live terminal block
 // the core I/O primitive: one updatable region pinned to bottom of terminal
 
-use crate::writer;
 use crate::ansi;
+use crate::writer;
 
 const SYNC_BEGIN: &str = "\x1b[?2026h";
 const SYNC_END: &str = "\x1b[?2026l";
@@ -162,7 +162,10 @@ impl TtyBlock {
             writer::writeln(line);
         }
 
-        let rows_per_line: Vec<u16> = lines.iter().map(|l| writer::visual_rows(l, width)).collect();
+        let rows_per_line: Vec<u16> = lines
+            .iter()
+            .map(|l| writer::visual_rows(l, width))
+            .collect();
         let total_visual_rows: u16 = rows_per_line.iter().sum();
         self.prev_total_rows = total_visual_rows;
 
@@ -176,7 +179,8 @@ impl TtyBlock {
                 let line_display_width = ansi::measure_width(cursor_line) as u16;
                 let safe_col = col.min(line_display_width);
 
-                let cursor_line_start: u16 = rows_per_line.iter()
+                let cursor_line_start: u16 = rows_per_line
+                    .iter()
                     .take((row as usize).min(rows_per_line.len()))
                     .sum();
 

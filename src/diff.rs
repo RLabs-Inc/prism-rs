@@ -134,7 +134,11 @@ fn fmt_num(num: Option<usize>) -> String {
 
 /// Generate a unified-diff style string between old_text and new_text.
 pub fn diff(old_text: &str, new_text: &str, options: &DiffOptions) -> String {
-    let context = if options.context == 0 { 3 } else { options.context };
+    let context = if options.context == 0 {
+        3
+    } else {
+        options.context
+    };
     let lines = compute_diff(old_text, new_text);
 
     let has_changes = lines.iter().any(|l| l.kind != DiffKind::Equal);

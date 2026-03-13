@@ -8,8 +8,16 @@ fn default_render_has_spinner_frame_and_text() {
     assert_eq!(lines.len(), 1);
     let plain = strip_ansi(&lines[0]);
     // First frame of dots spinner is "⠋"
-    assert!(plain.starts_with("⠋"), "expected dots frame, got: {}", plain);
-    assert!(plain.contains("Loading..."), "expected text, got: {}", plain);
+    assert!(
+        plain.starts_with("⠋"),
+        "expected dots frame, got: {}",
+        plain
+    );
+    assert!(
+        plain.contains("Loading..."),
+        "expected text, got: {}",
+        plain
+    );
 }
 
 #[test]
@@ -38,7 +46,11 @@ fn freeze_returns_frozen_line_with_icon() {
     assert_eq!(lines.len(), 1);
     let plain = strip_ansi(&lines[0]);
     assert!(plain.contains("✓"), "expected icon, got: {}", plain);
-    assert!(plain.contains("Processing"), "expected text, got: {}", plain);
+    assert!(
+        plain.contains("Processing"),
+        "expected text, got: {}",
+        plain
+    );
 }
 
 #[test]
@@ -63,20 +75,30 @@ fn freeze_with_custom_color() {
 
 #[test]
 fn custom_static_icon() {
-    let al = ActivityLine::new("test", ActivityLineOptions {
-        icon: Some(Icon::Static("→".to_string())),
-        ..ActivityLineOptions::default()
-    });
+    let al = ActivityLine::new(
+        "test",
+        ActivityLineOptions {
+            icon: Some(Icon::Static("→".to_string())),
+            ..ActivityLineOptions::default()
+        },
+    );
     let plain = strip_ansi(&al.render()[0]);
-    assert!(plain.starts_with("→"), "expected static icon, got: {}", plain);
+    assert!(
+        plain.starts_with("→"),
+        "expected static icon, got: {}",
+        plain
+    );
 }
 
 #[test]
 fn custom_frames() {
-    let mut al = ActivityLine::new("test", ActivityLineOptions {
-        icon: Some(Icon::Frames(vec!["A".to_string(), "B".to_string()])),
-        ..ActivityLineOptions::default()
-    });
+    let mut al = ActivityLine::new(
+        "test",
+        ActivityLineOptions {
+            icon: Some(Icon::Frames(vec!["A".to_string(), "B".to_string()])),
+            ..ActivityLineOptions::default()
+        },
+    );
     let p0 = strip_ansi(&al.render()[0]);
     assert!(p0.starts_with("A"));
     al.tick();
@@ -89,28 +111,41 @@ fn custom_frames() {
 
 #[test]
 fn metrics_callback() {
-    let al = ActivityLine::new("test", ActivityLineOptions {
-        metrics: Some(Box::new(|| "42 items".to_string())),
-        ..ActivityLineOptions::default()
-    });
+    let al = ActivityLine::new(
+        "test",
+        ActivityLineOptions {
+            metrics: Some(Box::new(|| "42 items".to_string())),
+            ..ActivityLineOptions::default()
+        },
+    );
     let plain = strip_ansi(&al.render()[0]);
-    assert!(plain.contains("42 items"), "expected metrics, got: {}", plain);
+    assert!(
+        plain.contains("42 items"),
+        "expected metrics, got: {}",
+        plain
+    );
 }
 
 #[test]
 fn interval_ms_from_spinner() {
-    let al = ActivityLine::new("test", ActivityLineOptions {
-        icon: Some(Icon::Spinner("star")),
-        ..ActivityLineOptions::default()
-    });
+    let al = ActivityLine::new(
+        "test",
+        ActivityLineOptions {
+            icon: Some(Icon::Spinner("star")),
+            ..ActivityLineOptions::default()
+        },
+    );
     assert_eq!(al.interval_ms(), 100); // star spinner is 100ms
 }
 
 #[test]
 fn interval_ms_override() {
-    let al = ActivityLine::new("test", ActivityLineOptions {
-        interval_ms: Some(200),
-        ..ActivityLineOptions::default()
-    });
+    let al = ActivityLine::new(
+        "test",
+        ActivityLineOptions {
+            interval_ms: Some(200),
+            ..ActivityLineOptions::default()
+        },
+    );
     assert_eq!(al.interval_ms(), 200);
 }

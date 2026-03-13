@@ -29,14 +29,18 @@ pub fn term_width() -> u16 {
 /// Write raw text to stdout (no newline). Panics on write failure (same as println!).
 pub fn write(text: &str) {
     let mut stdout = io::stdout().lock();
-    stdout.write_all(text.as_bytes()).expect("failed to write to stdout");
+    stdout
+        .write_all(text.as_bytes())
+        .expect("failed to write to stdout");
     stdout.flush().expect("failed to flush stdout");
 }
 
 /// Write text + newline to stdout. Panics on write failure.
 pub fn writeln(text: &str) {
     let mut stdout = io::stdout().lock();
-    stdout.write_all(text.as_bytes()).expect("failed to write to stdout");
+    stdout
+        .write_all(text.as_bytes())
+        .expect("failed to write to stdout");
     stdout.write_all(b"\n").expect("failed to write to stdout");
     stdout.flush().expect("failed to flush stdout");
 }
@@ -44,7 +48,9 @@ pub fn writeln(text: &str) {
 /// Write text + newline to stderr. Panics on write failure.
 pub fn write_err(text: &str) {
     let mut stderr = io::stderr().lock();
-    stderr.write_all(text.as_bytes()).expect("failed to write to stderr");
+    stderr
+        .write_all(text.as_bytes())
+        .expect("failed to write to stderr");
     stderr.write_all(b"\n").expect("failed to write to stderr");
     stderr.flush().expect("failed to flush stderr");
 }

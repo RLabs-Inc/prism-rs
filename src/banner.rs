@@ -103,10 +103,10 @@ fn get_glyph(ch: char) -> [u8; 5] {
 /// Get the on/off cell strings for a given style.
 fn style_cells(style: BannerStyle) -> (&'static str, &'static str) {
     match style {
-        BannerStyle::Block   => ("██", "  "),
-        BannerStyle::Shade   => ("▓▓", "░░"),
-        BannerStyle::Dots    => ("⣿⣿", "  "),
-        BannerStyle::Ascii   => ("##", "  "),
+        BannerStyle::Block => ("██", "  "),
+        BannerStyle::Shade => ("▓▓", "░░"),
+        BannerStyle::Dots => ("⣿⣿", "  "),
+        BannerStyle::Ascii => ("##", "  "),
         BannerStyle::Outline => ("▐▌", "  "),
     }
 }
@@ -118,13 +118,13 @@ fn apply_color(text: &str, color: &Option<BannerColor>) -> String {
     }
     match color {
         None => text.to_string(),
-        Some(BannerColor::Red)     => s().red().paint(text),
-        Some(BannerColor::Green)   => s().green().paint(text),
-        Some(BannerColor::Yellow)  => s().yellow().paint(text),
-        Some(BannerColor::Blue)    => s().blue().paint(text),
+        Some(BannerColor::Red) => s().red().paint(text),
+        Some(BannerColor::Green) => s().green().paint(text),
+        Some(BannerColor::Yellow) => s().yellow().paint(text),
+        Some(BannerColor::Blue) => s().blue().paint(text),
         Some(BannerColor::Magenta) => s().magenta().paint(text),
-        Some(BannerColor::Cyan)    => s().cyan().paint(text),
-        Some(BannerColor::White)   => s().white().paint(text),
+        Some(BannerColor::Cyan) => s().cyan().paint(text),
+        Some(BannerColor::White) => s().white().paint(text),
     }
 }
 

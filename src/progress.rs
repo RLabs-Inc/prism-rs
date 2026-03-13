@@ -190,7 +190,9 @@ pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
 
         // If computed width is too small and no explicit width, fall back to text-only
         if computed_width < 10 && explicit_width.is_none() {
-            let pct_str = s().bold().paint(&format!("{}%", (pct * 100.0).round() as u64));
+            let pct_str = s()
+                .bold()
+                .paint(&format!("{}%", (pct * 100.0).round() as u64));
             return BlockRender {
                 lines: vec![format!("{} {}", render_text, pct_str)],
                 cursor: None,
@@ -211,7 +213,10 @@ pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
         let mut parts = vec![bar];
 
         if show_percent {
-            parts.push(s().bold().paint(&format!("{}%", (pct * 100.0).round() as u64)));
+            parts.push(
+                s().bold()
+                    .paint(&format!("{}%", (pct * 100.0).round() as u64)),
+            );
         }
         if show_count {
             parts.push(s().dim().paint(&format!("{}/{}", current, total)));

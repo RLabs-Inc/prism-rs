@@ -28,7 +28,10 @@ fn bar_at_50_percent() {
 #[test]
 fn bar_classic_style() {
     std::env::set_var("FORCE_COLOR", "1");
-    let opts = RenderOptions { style: BarStyle::Classic, ..Default::default() };
+    let opts = RenderOptions {
+        style: BarStyle::Classic,
+        ..Default::default()
+    };
     let result = render_progress_bar(50, &opts);
     assert!(result.contains("["));
     assert!(result.contains("]"));
@@ -39,14 +42,28 @@ fn bar_classic_style() {
 fn all_styles_render() {
     std::env::set_var("FORCE_COLOR", "1");
     let styles = [
-        BarStyle::Bar, BarStyle::Blocks, BarStyle::Shades, BarStyle::Classic,
-        BarStyle::Arrows, BarStyle::Smooth, BarStyle::Dots, BarStyle::Square,
-        BarStyle::Circle, BarStyle::Pipe,
+        BarStyle::Bar,
+        BarStyle::Blocks,
+        BarStyle::Shades,
+        BarStyle::Classic,
+        BarStyle::Arrows,
+        BarStyle::Smooth,
+        BarStyle::Dots,
+        BarStyle::Square,
+        BarStyle::Circle,
+        BarStyle::Pipe,
     ];
     for style in styles {
-        let opts = RenderOptions { style, ..Default::default() };
+        let opts = RenderOptions {
+            style,
+            ..Default::default()
+        };
         let result = render_progress_bar(50, &opts);
-        assert!(!result.is_empty(), "Style {:?} produced empty output", style);
+        assert!(
+            !result.is_empty(),
+            "Style {:?} produced empty output",
+            style
+        );
     }
     std::env::remove_var("FORCE_COLOR");
 }

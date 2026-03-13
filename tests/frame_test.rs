@@ -10,7 +10,10 @@ fn frame_basic() {
 
 #[test]
 fn frame_with_title() {
-    let opts = FrameOptions { title: Some("Title".to_string()), ..Default::default() };
+    let opts = FrameOptions {
+        title: Some("Title".to_string()),
+        ..Default::default()
+    };
     let result = frame("content", &opts);
     assert!(result.contains("Title"));
     assert!(result.contains("content"));
@@ -18,7 +21,10 @@ fn frame_with_title() {
 
 #[test]
 fn frame_double_border() {
-    let opts = FrameOptions { border: BorderStyle::Double, ..Default::default() };
+    let opts = FrameOptions {
+        border: BorderStyle::Double,
+        ..Default::default()
+    };
     let result = frame("test", &opts);
     assert!(result.contains("║"));
     assert!(result.contains("═"));
@@ -39,8 +45,17 @@ fn header_basic() {
 
 #[test]
 fn all_border_styles_work() {
-    for style in [BorderStyle::Single, BorderStyle::Double, BorderStyle::Rounded, BorderStyle::Heavy] {
-        let opts = FrameOptions { border: style, width: Some(30), ..Default::default() };
+    for style in [
+        BorderStyle::Single,
+        BorderStyle::Double,
+        BorderStyle::Rounded,
+        BorderStyle::Heavy,
+    ] {
+        let opts = FrameOptions {
+            border: style,
+            width: Some(30),
+            ..Default::default()
+        };
         let result = frame("test", &opts);
         assert!(!result.is_empty());
     }

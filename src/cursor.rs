@@ -16,7 +16,11 @@ pub fn hide_cursor() {
 /// Show the terminal cursor. Only actually shows when all hides are balanced.
 pub fn show_cursor() {
     let prev = REF_COUNT.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| {
-        if v > 0 { Some(v - 1) } else { None }
+        if v > 0 {
+            Some(v - 1)
+        } else {
+            None
+        }
     });
     if prev == Ok(1) {
         crate::writer::write(SHOW);
