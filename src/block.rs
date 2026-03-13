@@ -49,7 +49,7 @@ pub struct LiveBlockOptions {
 
 /// Create a new [`LiveBlock`] from the given options.
 pub fn live_block(options: LiveBlockOptions) -> LiveBlock {
-    let tty_mode = options.tty.unwrap_or_else(|| writer::is_tty());
+    let tty_mode = options.tty.unwrap_or_else(writer::is_tty);
 
     if !tty_mode {
         LiveBlock {
@@ -176,10 +176,9 @@ impl TtyBlock {
                 let line_display_width = ansi::measure_width(cursor_line) as u16;
                 let safe_col = col.min(line_display_width);
 
-                let mut cursor_line_start: u16 = 0;
-                for i in 0..(row as usize).min(rows_per_line.len()) {
-                    cursor_line_start += rows_per_line[i];
-                }
+                let cursor_line_start: u16 = rows_per_line.iter()
+                    .take((row as usize).min(rows_per_line.len()))
+                    .sum();
 
                 let cursor_sub_row = if safe_col >= width {
                     safe_col / width

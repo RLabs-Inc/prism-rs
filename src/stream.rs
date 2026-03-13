@@ -25,6 +25,7 @@ pub struct StreamOptions {
 }
 
 impl Default for StreamOptions {
+    #[allow(clippy::derivable_impls)]
     fn default() -> Self {
         Self {
             layout: None,

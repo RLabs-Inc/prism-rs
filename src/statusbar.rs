@@ -45,7 +45,7 @@ impl Segment {
 }
 
 /// Configuration for rendering a status bar.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct StatusBarConfig {
     /// Left-aligned segments, joined by the separator.
     pub left: Vec<Segment>,
@@ -59,17 +59,6 @@ pub struct StatusBarConfig {
     pub separator_color: Option<fn(&str) -> String>,
 }
 
-impl Default for StatusBarConfig {
-    fn default() -> Self {
-        Self {
-            left: Vec::new(),
-            right: None,
-            separator: None,
-            indent: None,
-            separator_color: None,
-        }
-    }
-}
 
 /// Render a status bar using the current terminal state (TTY detection + width).
 ///
