@@ -3,6 +3,7 @@ pub mod columns;
 pub mod diff;
 pub mod badge;
 pub mod frame;
+pub mod highlight;
 pub mod table;
 pub mod cursor;
 pub mod list;
