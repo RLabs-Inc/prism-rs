@@ -96,11 +96,16 @@ impl Style {
         self.push(&format!("\x1b[48;2;{};{};{}m", r, g, b), "\x1b[49m")
     }
 
-    /// Terminal method: wrap text in accumulated ANSI codes
+    /// Terminal method: wrap text in accumulated ANSI codes (respects ansi_enabled())
     pub fn paint(&self, text: &str) -> String {
         if !ansi_enabled() {
             return crate::ansi::strip_ansi(text);
         }
+        self.render(text)
+    }
+
+    /// Always apply ANSI codes regardless of TTY state (for testing, logging to files, etc.)
+    pub fn render(&self, text: &str) -> String {
         if self.open.is_empty() {
             return text.to_string();
         }
