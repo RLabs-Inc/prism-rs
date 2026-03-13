@@ -1,5 +1,6 @@
 pub mod activity_line;
 pub mod ansi;
+pub mod args;
 pub mod badge;
 pub mod banner;
 pub mod block;
@@ -9,9 +10,11 @@ pub mod cursor;
 pub mod diff;
 pub mod elapsed;
 pub mod error;
+pub mod exec;
 pub mod file_preview;
 pub mod frame;
 pub mod highlight;
+pub mod input_line;
 pub mod keypress;
 pub mod layout;
 pub mod line_editor;
