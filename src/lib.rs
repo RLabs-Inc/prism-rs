@@ -1,5 +1,6 @@
 pub mod ansi;
 pub mod columns;
+pub mod diff;
 pub mod badge;
 pub mod frame;
 pub mod table;
