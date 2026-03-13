@@ -2,6 +2,7 @@ pub mod ansi;
 pub mod cursor;
 pub mod error;
 pub mod style;
+pub mod text;
 pub mod unicode;
 pub mod writer;
 
