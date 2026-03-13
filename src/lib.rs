@@ -1,8 +1,12 @@
 pub mod ansi;
+pub mod badge;
 pub mod cursor;
+pub mod elapsed;
 pub mod error;
+pub mod log;
 pub mod style;
 pub mod text;
+pub mod timer;
 pub mod unicode;
 pub mod writer;
 
