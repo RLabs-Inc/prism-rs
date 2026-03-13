@@ -21,6 +21,7 @@ pub mod section_block;
 pub mod spinner;
 pub mod statusbar;
 pub mod stream;
+pub mod layout;
 pub mod style;
 pub mod text;
 pub mod timer;
