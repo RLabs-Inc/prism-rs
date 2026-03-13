@@ -11,6 +11,7 @@ pub mod file_preview;
 pub mod markdown;
 pub mod table;
 pub mod cursor;
+pub mod live;
 pub mod list;
 pub mod elapsed;
 pub mod error;
