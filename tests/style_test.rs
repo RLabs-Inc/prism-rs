@@ -1,4 +1,4 @@
-use prism::style::{s, rgb, hex, Color, Style, RESET};
+use prism::style::{s, rgb, hex, Style, RESET};
 
 // IMPORTANT: Style tests check raw ANSI output. Since paint() respects ansi_enabled(),
 // and ansi_enabled() returns false in piped/CI environments, these tests use the Style

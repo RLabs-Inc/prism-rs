@@ -65,5 +65,5 @@ pub fn visual_rows(line: &str, width: u16) -> u16 {
         return 1;
     }
     let cols = width as usize;
-    ((w + cols - 1) / cols) as u16
+    w.div_ceil(cols) as u16
 }
