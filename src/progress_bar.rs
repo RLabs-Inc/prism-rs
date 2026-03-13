@@ -24,6 +24,12 @@ pub enum BarStyle {
 }
 
 impl BarStyle {
+    /// Returns (left_width, right_width) of the bar decoration characters in display columns.
+    pub fn decoration_widths(&self) -> (usize, usize) {
+        let bc = self.chars();
+        (bc.left.len(), bc.right.len())
+    }
+
     fn chars(&self) -> BarChars {
         match self {
             BarStyle::Bar     => BarChars { filled: "█", empty: "░", left: "",  right: ""  },

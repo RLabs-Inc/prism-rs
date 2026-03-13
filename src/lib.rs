@@ -16,6 +16,7 @@ pub mod list;
 pub mod elapsed;
 pub mod error;
 pub mod log;
+pub mod progress;
 pub mod progress_bar;
 pub mod section_block;
 pub mod spinner;
