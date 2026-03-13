@@ -1,5 +1,6 @@
 pub mod ansi;
 pub mod banner;
+pub mod block;
 pub mod columns;
 pub mod diff;
 pub mod badge;
@@ -15,6 +16,8 @@ pub mod error;
 pub mod log;
 pub mod progress_bar;
 pub mod spinner;
+pub mod statusbar;
+pub mod stream;
 pub mod style;
 pub mod text;
 pub mod timer;
