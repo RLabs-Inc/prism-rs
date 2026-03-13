@@ -1,0 +1,11 @@
+[package]
+name = "prism"
+version = "0.1.0"
+edition = "2021"
+description = "CLI primitives for hackers — light through a prism, data through the terminal"
+license = "MIT"
+
+[dependencies]
+crossterm = "0.28"
+unicode-width = "0.2"
+unicode-segmentation = "1.12"
