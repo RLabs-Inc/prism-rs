@@ -1,4 +1,5 @@
 pub mod ansi;
+pub mod cursor;
 pub mod error;
 pub mod style;
 pub mod unicode;
