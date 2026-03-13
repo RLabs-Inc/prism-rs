@@ -1,0 +1,171 @@
+// prism/keypress — raw keyboard input
+// reads individual keypresses without waiting for Enter
+// foundation for prompt, select, and interactive components
+
+use crossterm::event::{self, Event, KeyCode, KeyEvent as CtKeyEvent, KeyEventKind, KeyModifiers};
+use crossterm::terminal;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static RAW_MODE_REFS: AtomicUsize = AtomicUsize::new(0);
+
+/// A parsed keyboard event
+#[derive(Debug, Clone)]
+pub struct KeyEvent {
+    /// Key name: "a", "enter", "up", "tab", "space", "backspace", "f1", "wordleft", etc.
+    pub key: String,
+    /// The printable character, if any
+    pub char_val: Option<char>,
+    /// Ctrl modifier was held
+    pub ctrl: bool,
+    /// Shift modifier was held
+    pub shift: bool,
+    /// Alt/Option modifier was held
+    pub meta: bool,
+    /// Description of the key event
+    pub sequence: String,
+}
+
+/// Map a crossterm KeyCode + modifiers to our key name and char_val
+fn map_key(code: &KeyCode, modifiers: KeyModifiers) -> (String, Option<char>) {
+    let ctrl = modifiers.contains(KeyModifiers::CONTROL);
+
+    match code {
+        KeyCode::Enter => ("enter".into(), None),
+        KeyCode::Tab => ("tab".into(), None),
+        KeyCode::BackTab => ("tab".into(), None), // shift+tab
+        KeyCode::Backspace => ("backspace".into(), None),
+        KeyCode::Esc => ("escape".into(), None),
+        KeyCode::Up => ("up".into(), None),
+        KeyCode::Down => ("down".into(), None),
+        KeyCode::Left => {
+            if ctrl {
+                ("wordleft".into(), None)
+            } else {
+                ("left".into(), None)
+            }
+        }
+        KeyCode::Right => {
+            if ctrl {
+                ("wordright".into(), None)
+            } else {
+                ("right".into(), None)
+            }
+        }
+        KeyCode::Home => ("home".into(), None),
+        KeyCode::End => ("end".into(), None),
+        KeyCode::Insert => ("insert".into(), None),
+        KeyCode::Delete => ("delete".into(), None),
+        KeyCode::PageUp => ("pageup".into(), None),
+        KeyCode::PageDown => ("pagedown".into(), None),
+        KeyCode::F(n) => (format!("f{}", n), None),
+        KeyCode::Char(' ') => ("space".into(), Some(' ')),
+        KeyCode::Char(c) => {
+            if ctrl {
+                // ctrl+a..z: key is the lowercase letter
+                (c.to_lowercase().to_string(), None)
+            } else {
+                (c.to_string(), Some(*c))
+            }
+        }
+        KeyCode::Null => ("null".into(), None),
+        _ => ("unknown".into(), None),
+    }
+}
+
+/// Convert a crossterm key event to our KeyEvent
+fn from_crossterm(ct: &CtKeyEvent) -> KeyEvent {
+    let ctrl = ct.modifiers.contains(KeyModifiers::CONTROL);
+    let shift = ct.modifiers.contains(KeyModifiers::SHIFT);
+    let meta = ct.modifiers.contains(KeyModifiers::ALT);
+
+    let (key, char_val) = map_key(&ct.code, ct.modifiers);
+
+    let sequence = format!("{:?}", ct.code);
+
+    KeyEvent {
+        key,
+        char_val,
+        ctrl,
+        shift,
+        meta,
+        sequence,
+    }
+}
+
+/// Enable or disable raw mode with reference counting.
+/// First enable turns on raw mode, last disable turns it off.
+pub fn raw_mode(enable: bool) {
+    if enable {
+        let prev = RAW_MODE_REFS.fetch_add(1, Ordering::SeqCst);
+        if prev == 0 {
+            let _ = terminal::enable_raw_mode();
+        }
+    } else {
+        let prev = RAW_MODE_REFS.load(Ordering::SeqCst);
+        if prev == 0 {
+            return;
+        }
+        let prev = RAW_MODE_REFS.fetch_sub(1, Ordering::SeqCst);
+        if prev == 1 {
+            let _ = terminal::disable_raw_mode();
+        }
+    }
+}
+
+/// Reset raw mode ref count and disable (for panic recovery)
+pub fn raw_mode_reset() {
+    RAW_MODE_REFS.store(0, Ordering::SeqCst);
+    let _ = terminal::disable_raw_mode();
+}
+
+/// Read a single keypress. Blocks until a key is pressed.
+/// Enables raw mode for the read, disables after.
+pub fn keypress() -> crate::error::PrismResult<KeyEvent> {
+    raw_mode(true);
+    let result = loop {
+        match event::read() {
+            Ok(Event::Key(ct)) => {
+                // Only process Press events (skip Release/Repeat)
+                if ct.kind == KeyEventKind::Press {
+                    break Ok(from_crossterm(&ct));
+                }
+            }
+            Ok(_) => {
+                // Mouse, resize, etc — keep reading
+            }
+            Err(e) => {
+                break Err(crate::error::PrismError::Io(e));
+            }
+        }
+    };
+    raw_mode(false);
+    result
+}
+
+/// Read keypresses continuously. Calls the callback for each keypress.
+/// If the callback returns `true`, reading stops.
+/// Raw mode is enabled for the duration.
+pub fn keypress_stream<F>(mut callback: F) -> crate::error::PrismResult<()>
+where
+    F: FnMut(&KeyEvent) -> bool,
+{
+    raw_mode(true);
+    let result = loop {
+        match event::read() {
+            Ok(Event::Key(ct)) => {
+                if ct.kind == KeyEventKind::Press {
+                    let key = from_crossterm(&ct);
+                    if callback(&key) {
+                        break Ok(());
+                    }
+                }
+            }
+            Ok(_) => {}
+            Err(e) => {
+                break Err(crate::error::PrismError::Io(e));
+            }
+        }
+    };
+    raw_mode(false);
+    result
+}
