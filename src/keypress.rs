@@ -169,3 +169,25 @@ where
     raw_mode(false);
     result
 }
+
+/// Read a single keypress with timeout. Returns None if no key within timeout.
+///
+/// Unlike `keypress()`, this does NOT manage raw mode automatically — the
+/// caller must enable raw mode before entering the event loop and disable
+/// it after. This is the primitive for building custom event loops that
+/// need to refresh the display at a fixed rate regardless of input.
+///
+/// Handles both Press and Repeat events (held keys produce events).
+/// Release events are filtered out.
+pub fn keypress_poll(timeout: std::time::Duration) -> crate::error::PrismResult<Option<KeyEvent>> {
+    if event::poll(timeout).map_err(crate::error::PrismError::Io)? {
+        match event::read().map_err(crate::error::PrismError::Io)? {
+            Event::Key(ct) if ct.kind != KeyEventKind::Release => {
+                Ok(Some(from_crossterm(&ct)))
+            }
+            _ => Ok(None),
+        }
+    } else {
+        Ok(None)
+    }
+}

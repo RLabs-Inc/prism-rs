@@ -154,9 +154,13 @@ impl LayoutInner {
             return;
         }
 
+        let cols = width as usize;
         for line in &lines {
             writer::write(line);
-            writer::write("\n");
+            let vis = ansi::measure_width(line);
+            if vis == 0 || vis % cols != 0 {
+                writer::write("\n");
+            }
         }
 
         let rows_per_line: Vec<u16> = lines
@@ -255,20 +259,17 @@ impl Layout {
                     writer::writeln(text);
                 }
                 _ => {
-                    writer::write(SYNC_BEGIN);
+
                     inner.erase_active();
                     writer::writeln(text);
                     inner.draw_active(frame);
-                    writer::write(SYNC_END);
                 }
             }
         } else {
             let frame = inner.render_fn.as_mut().map(|rf| rf());
-            writer::write(SYNC_BEGIN);
             inner.erase_active();
             writer::writeln(text);
             inner.draw_active(frame);
-            writer::write(SYNC_END);
         }
     }
 
@@ -294,10 +295,8 @@ impl Layout {
         if inner.prev_height == 0 && frame.lines.is_empty() {
             return;
         }
-        writer::write(SYNC_BEGIN);
         inner.erase_active();
         inner.draw_active(Some(frame));
-        writer::write(SYNC_END);
     }
 
     /// Redraw the active zone with the current render function.
@@ -315,10 +314,8 @@ impl Layout {
         if inner.prev_height == 0 && frame.lines.is_empty() {
             return;
         }
-        writer::write(SYNC_BEGIN);
         inner.erase_active();
         inner.draw_active(Some(frame));
-        writer::write(SYNC_END);
     }
 
     /// Write raw data into the output zone. Buffers until a newline is seen,
@@ -353,12 +350,10 @@ impl Layout {
                 writer::writeln(&complete);
             }
             _ => {
-                writer::write(SYNC_BEGIN);
-                inner.erase_active();
+                    inner.erase_active();
                 writer::writeln(&complete);
                 inner.draw_active(frame);
-                writer::write(SYNC_END);
-            }
+                }
         }
     }
 
@@ -386,7 +381,6 @@ impl Layout {
         let has_buffered = !inner.write_buffer.is_empty();
 
         if has_active || has_buffered {
-            writer::write(SYNC_BEGIN);
         }
         inner.erase_active();
         if has_buffered {
@@ -397,7 +391,6 @@ impl Layout {
             writer::writeln(msg);
         }
         if has_active || has_buffered {
-            writer::write(SYNC_END);
         }
 
         inner.prev_height = 0;
@@ -608,12 +601,10 @@ impl LayoutPrint for LayoutPrinter {
                 writer::writeln(text);
             }
             _ => {
-                writer::write(SYNC_BEGIN);
-                inner.erase_active();
+                    inner.erase_active();
                 writer::writeln(text);
                 inner.draw_active(frame);
-                writer::write(SYNC_END);
-            }
+                }
         }
     }
 }

@@ -17,7 +17,7 @@ pub struct InputLineOptions {
     /// Prompt string or function for dynamic prompts
     pub prompt: PromptSource,
     /// Prompt color function (default: cyan)
-    pub prompt_color: Box<dyn Fn(&str) -> String>,
+    pub prompt_color: Box<dyn Fn(&str) -> String + Send>,
     /// Shared history (passed to line editor)
     pub history: Vec<String>,
     /// Max history entries
@@ -29,7 +29,7 @@ pub struct InputLineOptions {
 /// Either a static string or a closure that returns a prompt
 pub enum PromptSource {
     Static(String),
-    Dynamic(Box<dyn Fn() -> String>),
+    Dynamic(Box<dyn Fn() -> String + Send>),
 }
 
 impl PromptSource {
@@ -45,7 +45,7 @@ impl Default for InputLineOptions {
     fn default() -> Self {
         Self {
             prompt: PromptSource::Static("> ".into()),
-            prompt_color: Box::new(|t| Style::new().cyan().paint(t)),
+            prompt_color: Box::new(|t: &str| Style::new().cyan().paint(t)),
             history: Vec::new(),
             history_size: None,
             mask: None,
@@ -57,7 +57,7 @@ impl Default for InputLineOptions {
 pub struct InputLine {
     editor: LineEditor,
     prompt: PromptSource,
-    prompt_color: Box<dyn Fn(&str) -> String>,
+    prompt_color: Box<dyn Fn(&str) -> String + Send>,
     mask: Option<String>,
 }
 

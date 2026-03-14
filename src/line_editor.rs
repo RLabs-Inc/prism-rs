@@ -22,7 +22,7 @@ pub struct LineEditor {
     history_index: i32, // -1 = current line
     saved_line: String,
     #[allow(clippy::type_complexity)]
-    on_render: Option<Box<dyn FnMut(&LineEditorState)>>,
+    on_render: Option<Box<dyn FnMut(&LineEditorState) + Send>>,
 }
 
 impl LineEditor {
@@ -52,7 +52,7 @@ impl LineEditor {
     }
 
     /// Create a new editor with a render callback.
-    pub fn with_on_render(on_render: Box<dyn FnMut(&LineEditorState)>) -> Self {
+    pub fn with_on_render(on_render: Box<dyn FnMut(&LineEditorState) + Send>) -> Self {
         Self {
             buffer: String::new(),
             cursor: 0,
@@ -271,6 +271,11 @@ impl LineEditor {
     /// The current cursor byte offset.
     pub fn cursor(&self) -> usize {
         self.cursor
+    }
+
+    /// The current history entries (most recent first).
+    pub fn history(&self) -> &[String] {
+        &self.history
     }
 
     /// A snapshot of the current editor state.

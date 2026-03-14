@@ -158,8 +158,15 @@ impl TtyBlock {
         let BlockRender { lines, cursor } = (self.render)();
         let width = writer::term_width();
 
+        let cols = width as usize;
         for line in &lines {
-            writer::writeln(line);
+            writer::write(line);
+            // Use \r\n for raw mode compatibility. Skip if line fills
+            // the terminal exactly (cursor already wrapped).
+            let vis = crate::ansi::measure_width(line);
+            if vis == 0 || vis % cols != 0 {
+                writer::write("\r\n");
+            }
         }
 
         let rows_per_line: Vec<u16> = lines
