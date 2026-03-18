@@ -22,6 +22,8 @@ pub struct ProgressOptions {
     pub width: Option<usize>,
     /// Bar visual style (default: Bar)
     pub style: BarStyle,
+    /// Bar color function (default: cyan). Passed through to render_progress_bar.
+    pub color: Option<fn(&str) -> String>,
     /// Whether to show percentage (default: true)
     pub show_percent: bool,
     /// Whether to show count (e.g. "42/100")
@@ -38,6 +40,7 @@ impl Default for ProgressOptions {
             total: 100,
             width: None,
             style: BarStyle::Bar,
+            color: None,
             show_percent: true,
             show_count: false,
             show_eta: false,
@@ -51,13 +54,13 @@ struct ProgressState {
     current: u64,
     total: u64,
     stopped: bool,
+    timer: Elapsed,
 }
 
 /// A live progress bar that can be updated, completed, or failed.
 pub struct ProgressBar {
     state: Rc<RefCell<ProgressState>>,
     block: LiveBlock,
-    timer: Elapsed,
     text: String,
     tty: bool,
 }
@@ -93,15 +96,17 @@ impl ProgressBar {
     }
 
     fn end(&mut self, icon: &str, msg: &str, icon_color: fn(&str) -> String) {
+        let elapsed_str;
         {
             let mut st = self.state.borrow_mut();
             if st.stopped {
                 return;
             }
+            elapsed_str = st.timer.render();
             st.stopped = true;
         }
 
-        let elapsed = s().dim().paint(&self.timer.render());
+        let elapsed = s().dim().paint(&elapsed_str);
         let final_msg = format!("{} {} {}", icon_color(icon), msg, elapsed);
 
         if self.tty {
@@ -119,12 +124,12 @@ impl ProgressBar {
 /// In pipe mode, `update()` is silent; `done()`/`fail()` print a single line.
 pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
     let tty = writer::is_tty();
-    let timer = Elapsed::new();
 
     let state = Rc::new(RefCell::new(ProgressState {
         current: 0,
         total: options.total,
         stopped: false,
+        timer: Elapsed::new(),
     }));
 
     if !tty {
@@ -141,7 +146,6 @@ pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
         return ProgressBar {
             state,
             block,
-            timer,
             text: text.to_string(),
             tty: false,
         };
@@ -157,7 +161,7 @@ pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
     let bar_style = options.style;
     let smooth = options.smooth;
     let explicit_width = options.width;
-    let render_timer = Elapsed::new();
+    let color_fn = options.color;
 
     let render_fn = move || {
         let st = render_state.borrow();
@@ -206,7 +210,9 @@ pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
                 total,
                 width: bar_width,
                 style: bar_style,
+                color: color_fn,
                 smooth,
+                empty_char: None,
             },
         );
 
@@ -222,7 +228,7 @@ pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
             parts.push(s().dim().paint(&format!("{}/{}", current, total)));
         }
         if show_eta && current > 0 && pct < 1.0 {
-            let elapsed_sec = render_timer.ms() as f64 / 1000.0;
+            let elapsed_sec = render_state.borrow().timer.ms() as f64 / 1000.0;
             let rate = current as f64 / elapsed_sec;
             let remaining = ((total - current) as f64 / rate).max(0.0);
             if remaining < 60.0 {
@@ -249,7 +255,6 @@ pub fn progress(text: &str, options: ProgressOptions) -> ProgressBar {
     ProgressBar {
         state,
         block,
-        timer,
         text: text.to_string(),
         tty: true,
     }

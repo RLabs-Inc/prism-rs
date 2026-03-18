@@ -1,3 +1,5 @@
+use unicode_width::UnicodeWidthStr;
+
 use crate::style::s;
 
 /// Bar style characters
@@ -27,7 +29,10 @@ impl BarStyle {
     /// Returns (left_width, right_width) of the bar decoration characters in display columns.
     pub fn decoration_widths(&self) -> (usize, usize) {
         let bc = self.chars();
-        (bc.left.len(), bc.right.len())
+        (
+            UnicodeWidthStr::width(bc.left),
+            UnicodeWidthStr::width(bc.right),
+        )
     }
 
     fn chars(&self) -> BarChars {
@@ -103,7 +108,12 @@ pub struct RenderOptions {
     pub total: u64,
     pub width: usize,
     pub style: BarStyle,
+    /// Bar color function (default: cyan). Use `None` for default cyan.
+    pub color: Option<fn(&str) -> String>,
     pub smooth: bool,
+    /// Override the empty portion character. If `None`, uses the style's default.
+    /// Use `Some(" ")` for invisible empty portion (compact bars in tables).
+    pub empty_char: Option<&'static str>,
 }
 
 impl Default for RenderOptions {
@@ -112,9 +122,16 @@ impl Default for RenderOptions {
             total: 100,
             width: 30,
             style: BarStyle::Bar,
+            color: None,
             smooth: true,
+            empty_char: None,
         }
     }
+}
+
+/// Default cyan color function.
+fn default_color(t: &str) -> String {
+    s().cyan().paint(t)
 }
 
 /// Pure render function — returns the bar string for a given value
@@ -125,7 +142,10 @@ pub fn render_progress_bar(current: u64, options: &RenderOptions) -> String {
         (current as f64 / options.total as f64).clamp(0.0, 1.0)
     };
 
+    let color_fn = options.color.unwrap_or(default_color);
+
     let bs = options.style.chars();
+    let empty_ch = options.empty_char.unwrap_or(bs.empty);
     let bar_width = options.width.max(1);
     let can_smooth = options.smooth
         && matches!(
@@ -144,21 +164,21 @@ pub fn render_progress_bar(current: u64, options: &RenderOptions) -> String {
 
         format!(
             "{}{}{}",
-            s().cyan().paint(&bs.filled.repeat(full_chars)),
+            color_fn(&bs.filled.repeat(full_chars)),
             if !partial.is_empty() {
-                s().cyan().paint(partial)
+                color_fn(partial)
             } else {
                 String::new()
             },
-            s().dim().paint(&bs.empty.repeat(empty_width))
+            s().dim().paint(&empty_ch.repeat(empty_width))
         )
     } else {
         let filled_width = (pct * bar_width as f64).round() as usize;
         let empty_width = bar_width - filled_width;
         format!(
             "{}{}",
-            s().cyan().paint(&bs.filled.repeat(filled_width)),
-            s().dim().paint(&bs.empty.repeat(empty_width))
+            color_fn(&bs.filled.repeat(filled_width)),
+            s().dim().paint(&empty_ch.repeat(empty_width))
         )
     };
 
