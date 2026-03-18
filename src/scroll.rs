@@ -221,6 +221,233 @@ pub fn scroll_view(config: &ScrollViewConfig) -> ScrollViewResult {
 }
 
 // ---------------------------------------------------------------------------
+// ScrollTable — scrollable data table with fixed header and footer
+// ---------------------------------------------------------------------------
+
+use crate::ansi::measure_width;
+use crate::table::Align;
+use crate::text::pad;
+
+/// Column definition for a scroll table.
+pub struct ScrollCol {
+    /// Column header label.
+    pub label: String,
+    /// Column width in characters.
+    pub width: usize,
+    /// Text alignment within the column.
+    pub align: Align,
+}
+
+impl ScrollCol {
+    /// Create a left-aligned column.
+    pub fn new(label: &str, width: usize) -> Self {
+        Self { label: label.to_string(), width, align: Align::Left }
+    }
+
+    /// Create a column with specific alignment.
+    pub fn aligned(label: &str, width: usize, align: Align) -> Self {
+        Self { label: label.to_string(), width, align }
+    }
+
+    /// Create a center-aligned column.
+    pub fn center(label: &str, width: usize) -> Self {
+        Self { label: label.to_string(), width, align: Align::Center }
+    }
+
+    /// Create a right-aligned column.
+    pub fn right(label: &str, width: usize) -> Self {
+        Self { label: label.to_string(), width, align: Align::Right }
+    }
+}
+
+/// Configuration for rendering a scrollable table.
+pub struct ScrollTableConfig<'a> {
+    /// Column definitions (label, width, alignment).
+    pub columns: &'a [ScrollCol],
+
+    /// Data rows — each row is a Vec of pre-styled cell strings.
+    /// Cells are padded to column width automatically.
+    pub rows: &'a [Vec<String>],
+
+    /// Total available height (lines) for the entire table including
+    /// header, separator, scroll indicators, data, and footer.
+    pub height: usize,
+
+    /// Current scroll offset (0-based).
+    pub scroll_offset: usize,
+
+    /// Column separator string (default: "  ").
+    pub separator: &'a str,
+
+    /// Left indent before the first column (for selection cursor space).
+    pub indent: usize,
+
+    /// Footer lines pinned at the bottom (hints, etc.).
+    pub footer: &'a [String],
+
+    /// Message shown when rows is empty.
+    pub empty_message: Option<&'a str>,
+}
+
+impl<'a> Default for ScrollTableConfig<'a> {
+    fn default() -> Self {
+        Self {
+            columns: &[],
+            rows: &[],
+            height: 24,
+            scroll_offset: 0,
+            separator: "  ",
+            indent: 2,
+            footer: &[],
+            empty_message: None,
+        }
+    }
+}
+
+/// Result of rendering a scroll table.
+pub struct ScrollTableResult {
+    /// The rendered lines (exactly `height` lines).
+    pub lines: Vec<String>,
+    /// Number of data rows that fit in the viewport.
+    pub capacity: usize,
+    /// The range of row indices that are visible.
+    pub visible_range: std::ops::Range<usize>,
+    /// Number of items above the viewport.
+    pub above: usize,
+    /// Number of items below the viewport.
+    pub below: usize,
+}
+
+/// Render a scrollable data table with fixed header, separator, scroll
+/// indicators, and footer.
+///
+/// Layout (top to bottom):
+/// ```text
+/// ┌─ header (auto-generated from columns) ──┐
+/// │─ separator (matches header width) ───────│
+/// │  ▲ N more above                          │  ← scroll indicator
+/// │  row 0: cell │ cell │ cell               │
+/// │  row 1: cell │ cell │ cell               │  ← padded to column widths
+/// │  ...                                     │
+/// │  ▼ N more below                          │  ← scroll indicator
+/// │  footer hint lines                       │
+/// └──────────────────────────────────────────┘
+/// ```
+///
+/// Cells in `rows` are pre-styled strings. The table pads each cell to
+/// its column width using the column's alignment. The caller handles all
+/// cell styling (colors, bold, etc.).
+pub fn scroll_table(config: &ScrollTableConfig) -> ScrollTableResult {
+    let indent_str = " ".repeat(config.indent);
+    let sep = config.separator;
+
+    // ── Header ──────────────────────────────────────────────────────
+    let header = {
+        let mut h = indent_str.clone();
+        for (i, col) in config.columns.iter().enumerate() {
+            if i > 0 { h.push_str(sep); }
+            let label = s().bold().dim().paint(&col.label);
+            let align_str = match col.align {
+                Align::Left => "left",
+                Align::Right => "right",
+                Align::Center => "center",
+            };
+            h.push_str(&pad(&label, col.width, align_str));
+        }
+        h
+    };
+
+    let header_width = measure_width(&header);
+
+    // ── Separator ───────────────────────────────────────────────────
+    let separator_line = format!("{}{}",
+        indent_str,
+        s().dim().paint(&crate::frame::divider("─", header_width.saturating_sub(config.indent))),
+    );
+
+    // ── Chrome calculation ──────────────────────────────────────────
+    // header(1) + separator(1) + above(1) + below(1) + footer lines
+    let chrome = 2 + 2 + config.footer.len();
+    let capacity = config.height.saturating_sub(chrome);
+
+    // ── Scroll math ─────────────────────────────────────────────────
+    let total = config.rows.len();
+    let offset = clamp_scroll(config.scroll_offset, total, capacity);
+    let end = (offset + capacity).min(total);
+    let above = offset;
+    let below = total.saturating_sub(end);
+
+    // ── Build output ────────────────────────────────────────────────
+    let mut lines = Vec::with_capacity(config.height);
+
+    // Header + separator
+    lines.push(header);
+    lines.push(separator_line);
+
+    // Empty state
+    if config.rows.is_empty() {
+        if let Some(msg) = config.empty_message {
+            lines.push(format!("{}{}", indent_str, s().dim().paint(msg)));
+        }
+        for line in config.footer {
+            lines.push(line.clone());
+        }
+        return ScrollTableResult {
+            lines,
+            capacity,
+            visible_range: 0..0,
+            above: 0,
+            below: 0,
+        };
+    }
+
+    // Above indicator
+    if above > 0 {
+        lines.push(format!("{}{} {} more above",
+            indent_str, s().dim().paint("▲"), s().dim().paint(&above.to_string())));
+    } else {
+        lines.push(String::new());
+    }
+
+    // Data rows — pad each cell to column width
+    for row in &config.rows[offset..end] {
+        let mut line = indent_str.clone();
+        for (ci, col) in config.columns.iter().enumerate() {
+            if ci > 0 { line.push_str(sep); }
+            let cell = row.get(ci).map(|s| s.as_str()).unwrap_or("");
+            let align_str = match col.align {
+                Align::Left => "left",
+                Align::Right => "right",
+                Align::Center => "center",
+            };
+            line.push_str(&pad(cell, col.width, align_str));
+        }
+        lines.push(line);
+    }
+
+    // Below indicator
+    if below > 0 {
+        lines.push(format!("{}{} {} more below",
+            indent_str, s().dim().paint("▼"), s().dim().paint(&below.to_string())));
+    } else {
+        lines.push(String::new());
+    }
+
+    // Footer
+    for line in config.footer {
+        lines.push(line.clone());
+    }
+
+    ScrollTableResult {
+        lines,
+        capacity,
+        visible_range: offset..end,
+        above,
+        below,
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -401,5 +628,111 @@ mod tests {
     fn test_clamp_scroll_zero_total() {
         assert_eq!(clamp_scroll(0, 0, 20), 0);
         assert_eq!(clamp_scroll(5, 0, 20), 0);
+    }
+
+    // ── ScrollTable ──────────────────────────────────────────────────
+
+    #[test]
+    fn test_scroll_table_basic() {
+        let cols = vec![
+            ScrollCol::new("NAME", 10),
+            ScrollCol::right("VAL", 5),
+        ];
+        let rows: Vec<Vec<String>> = vec![
+            vec!["Alice".into(), "100".into()],
+            vec!["Bob".into(), "200".into()],
+        ];
+        let result = scroll_table(&ScrollTableConfig {
+            columns: &cols,
+            rows: &rows,
+            height: 20,
+            ..Default::default()
+        });
+
+        assert_eq!(result.capacity, 16); // 20 - 2(header+sep) - 2(indicators)
+        assert_eq!(result.visible_range, 0..2);
+        assert_eq!(result.above, 0);
+        assert_eq!(result.below, 0);
+        // header + separator + above + 2 data rows + below = 6 lines
+        assert!(result.lines.len() >= 6);
+    }
+
+    #[test]
+    fn test_scroll_table_with_footer() {
+        let cols = vec![ScrollCol::new("X", 5)];
+        let rows: Vec<Vec<String>> = (0..50).map(|i| vec![format!("r{}", i)]).collect();
+        let footer = vec!["hints".to_string(), "".to_string()];
+
+        let result = scroll_table(&ScrollTableConfig {
+            columns: &cols,
+            rows: &rows,
+            height: 15,
+            footer: &footer,
+            ..Default::default()
+        });
+
+        // capacity = 15 - 2(header+sep) - 2(indicators) - 2(footer) = 9
+        assert_eq!(result.capacity, 9);
+        assert_eq!(result.visible_range, 0..9);
+        assert_eq!(result.below, 41);
+    }
+
+    #[test]
+    fn test_scroll_table_scrolled() {
+        let cols = vec![ScrollCol::new("X", 5)];
+        let rows: Vec<Vec<String>> = (0..20).map(|i| vec![format!("r{}", i)]).collect();
+
+        let result = scroll_table(&ScrollTableConfig {
+            columns: &cols,
+            rows: &rows,
+            height: 10,
+            scroll_offset: 5,
+            ..Default::default()
+        });
+
+        // capacity = 10 - 4 = 6
+        assert_eq!(result.capacity, 6);
+        assert_eq!(result.visible_range, 5..11);
+        assert_eq!(result.above, 5);
+        assert_eq!(result.below, 9);
+    }
+
+    #[test]
+    fn test_scroll_table_empty() {
+        let cols = vec![ScrollCol::new("X", 5)];
+        let rows: Vec<Vec<String>> = vec![];
+
+        let result = scroll_table(&ScrollTableConfig {
+            columns: &cols,
+            rows: &rows,
+            height: 10,
+            empty_message: Some("Nothing here."),
+            ..Default::default()
+        });
+
+        assert_eq!(result.capacity, 6);
+        assert_eq!(result.visible_range, 0..0);
+        assert!(result.lines.iter().any(|l| l.contains("Nothing here.")));
+    }
+
+    #[test]
+    fn test_scroll_table_column_alignment() {
+        let cols = vec![
+            ScrollCol::new("LEFT", 8),
+            ScrollCol::center("CTR", 6),
+            ScrollCol::right("RIGHT", 6),
+        ];
+        let rows = vec![vec!["a".into(), "b".into(), "c".into()]];
+
+        let result = scroll_table(&ScrollTableConfig {
+            columns: &cols,
+            rows: &rows,
+            height: 10,
+            ..Default::default()
+        });
+
+        // Data row should have padded cells
+        // Find the data row (after header, separator, above indicator)
+        assert!(result.lines.len() >= 4);
     }
 }

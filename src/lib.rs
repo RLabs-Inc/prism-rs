@@ -91,8 +91,8 @@ pub use highlight::{detect_language, highlight, highlight_line, HighlightOptions
 pub use list::{kv, list, tree, KvOptions, ListOptions, ListStyle, TreeNode};
 pub use markdown::md;
 pub use scroll::{
-    clamp_scroll, data_capacity, ensure_visible, page_down, page_up, scroll_view, ScrollViewConfig,
-    ScrollViewResult,
+    clamp_scroll, data_capacity, ensure_visible, page_down, page_up, scroll_table, scroll_view,
+    ScrollCol, ScrollTableConfig, ScrollTableResult, ScrollViewConfig, ScrollViewResult,
 };
 pub use table::{table, Align, Column, TableOptions};
 
