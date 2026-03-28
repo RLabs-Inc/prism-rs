@@ -2,6 +2,7 @@
 // Composes pure state machines (activity_line, section_block) with terminal I/O
 // and a background thread for animation.
 
+use std::cell::RefCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use std::thread;
@@ -74,7 +75,9 @@ enum ActivityInner {
 }
 
 struct PipeActivity {
-    msg: String,
+    /// Interior mutability so `text(&self)` can update the message for later
+    /// use by `done(None)` / `fail(None)` etc., matching the TS behaviour.
+    msg: RefCell<String>,
 }
 
 /// Commands sent from the main thread to the animation thread.
@@ -109,7 +112,7 @@ pub fn activity(text: &str, options: ActivityOptions) -> Activity {
         writer::writeln(text);
         return Activity {
             inner: ActivityInner::Pipe(PipeActivity {
-                msg: text.to_string(),
+                msg: RefCell::new(text.to_string()),
             }),
         };
     }
@@ -163,7 +166,6 @@ pub fn activity(text: &str, options: ActivityOptions) -> Activity {
             // We need a mutable reference to act inside the render closure,
             // but also need to call act.tick() outside. Use a shared pointer.
             // Since this is all single-threaded (within the animation thread), use RefCell.
-            use std::cell::RefCell;
             use std::rc::Rc;
 
             let act_cell = Rc::new(RefCell::new(act));
@@ -203,6 +205,10 @@ pub fn activity(text: &str, options: ActivityOptions) -> Activity {
                         reply,
                     }) => {
                         let mut act = act_cell.borrow_mut();
+                        // Stop animation, update text if provided, then freeze
+                        if let Some(ref m) = msg {
+                            act.text(m);
+                        }
                         let frozen = act.freeze(&icon, msg.as_deref(), Some(color));
                         let frozen_line = frozen.into_iter().next().unwrap_or_default();
                         block.close(Some(&frozen_line));
@@ -236,6 +242,10 @@ pub fn activity(text: &str, options: ActivityOptions) -> Activity {
                         color,
                         reply,
                     }) => {
+                        // Stop animation, update text if provided, then freeze
+                        if let Some(ref m) = msg {
+                            act.text(m);
+                        }
                         let frozen = act.freeze(&icon, msg.as_deref(), Some(color));
                         let frozen_line = frozen.into_iter().next().unwrap_or_default();
                         writer::write(&format!("\r\x1b[2K{}\n", frozen_line));
@@ -270,11 +280,10 @@ impl Activity {
     pub fn text(&self, msg: &str) {
         match &self.inner {
             ActivityInner::Pipe(p) => {
-                // Non-TTY: just print the new message
+                // Non-TTY: print the new message and update stored msg
+                // so that subsequent done(None) uses the latest text.
                 writer::writeln(msg);
-                // Note: can't update p.msg because we only have &self.
-                // For pipe mode the msg is only used in end methods.
-                let _ = &p.msg;
+                *p.msg.borrow_mut() = msg.to_string();
             }
             ActivityInner::Tty(t) => {
                 let _ = t.tx.send(ActivityCmd::Text(msg.to_string()));
@@ -310,8 +319,10 @@ impl Activity {
     fn end(self, icon: &str, msg: Option<&str>, color: fn(&str) -> String) {
         match self.inner {
             ActivityInner::Pipe(p) => {
-                let display = msg.unwrap_or(&p.msg);
-                writer::writeln(&format!("{} {}", color(icon), display));
+                // Pipe mode: plain icons without color, matching TS behaviour
+                let stored = p.msg.borrow();
+                let display = msg.unwrap_or(&stored);
+                writer::writeln(&format!("{} {}", icon, display));
             }
             ActivityInner::Tty(mut t) => {
                 // Send end command and wait for the thread to finish
@@ -381,6 +392,7 @@ enum SectionInner {
 struct PipeSection {
     title: String,
     pad: String,
+    connector: String,
 }
 
 /// Commands sent from the main thread to the section animation thread.
@@ -417,6 +429,7 @@ pub fn section(title: &str, options: SectionOptions) -> Section {
             inner: SectionInner::Pipe(PipeSection {
                 title: title.to_string(),
                 pad,
+                connector: options.connector,
             }),
         };
     }
@@ -446,7 +459,6 @@ pub fn section(title: &str, options: SectionOptions) -> Section {
     hide_cursor();
 
     let handle = thread::spawn(move || {
-        use std::cell::RefCell;
         use std::rc::Rc;
 
         let sec = SectionBlock::new(
@@ -564,7 +576,7 @@ impl Section {
     pub fn add(&self, line: &str) {
         match &self.inner {
             SectionInner::Pipe(p) => {
-                writer::writeln(&format!("{}\u{23BF}  {}", p.pad, line));
+                writer::writeln(&format!("{}{}  {}", p.pad, p.connector, line));
             }
             SectionInner::Tty(t) => {
                 let _ = t.tx.send(SectionCmd::Add(line.to_string()));
@@ -577,7 +589,7 @@ impl Section {
         match &self.inner {
             SectionInner::Pipe(p) => {
                 for l in content.split('\n') {
-                    writer::writeln(&format!("{}\u{23BF}  {}", p.pad, l));
+                    writer::writeln(&format!("{}{}  {}", p.pad, p.connector, l));
                 }
             }
             SectionInner::Tty(t) => {
@@ -611,18 +623,19 @@ impl Section {
         self.end(icon, Some(msg), color.unwrap_or(white));
     }
 
-    fn end(self, icon: &str, msg: Option<&str>, color: fn(&str) -> String) {
+    fn end(self, icon: &str, msg: Option<&str>, _color: fn(&str) -> String) {
         match self.inner {
             SectionInner::Pipe(p) => {
+                // Pipe mode: plain icons without color, matching TS behaviour
                 let display = msg.unwrap_or(&p.title);
-                writer::writeln(&format!("{}{} {}", p.pad, color(icon), display));
+                writer::writeln(&format!("{}{} {}", p.pad, icon, display));
             }
             SectionInner::Tty(mut t) => {
                 let (reply_tx, reply_rx) = mpsc::channel();
                 let _ = t.tx.send(SectionCmd::End {
                     icon: icon.to_string(),
                     msg: msg.map(|s| s.to_string()),
-                    color,
+                    color: _color,
                     reply: reply_tx,
                 });
                 let _ = reply_rx.recv();

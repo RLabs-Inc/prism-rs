@@ -154,13 +154,9 @@ impl LayoutInner {
             return;
         }
 
-        let cols = width as usize;
         for line in &lines {
             writer::write(line);
-            let vis = ansi::measure_width(line);
-            if vis == 0 || vis % cols != 0 {
-                writer::write("\n");
-            }
+            writer::write("\r\n");
         }
 
         let rows_per_line: Vec<u16> = lines
@@ -246,31 +242,16 @@ impl Layout {
             return;
         }
 
-        // Check if active zone is showing
-        let has_active = inner.render_fn.is_some();
-        if !has_active || (inner.prev_height == 0) {
-            // Render to see if there is content
-            let frame = inner.render_fn.as_mut().map(|rf| rf());
-            match frame {
-                Some(ref f) if f.lines.is_empty() && inner.prev_height == 0 => {
-                    writer::writeln(text);
-                }
-                None => {
-                    writer::writeln(text);
-                }
-                _ => {
-
-                    inner.erase_active();
-                    writer::writeln(text);
-                    inner.draw_active(frame);
-                }
-            }
-        } else {
-            let frame = inner.render_fn.as_mut().map(|rf| rf());
-            inner.erase_active();
+        let frame = inner.render_fn.as_mut().map(|rf| rf());
+        if frame.is_none() || (inner.prev_height == 0 && frame.as_ref().is_none_or(|f| f.lines.is_empty())) {
             writer::writeln(text);
-            inner.draw_active(frame);
+            return;
         }
+        writer::write(SYNC_BEGIN);
+        inner.erase_active();
+        writer::writeln(text);
+        inner.draw_active(frame);
+        writer::write(SYNC_END);
     }
 
     /// Set (or replace) the active zone render function.
@@ -295,8 +276,10 @@ impl Layout {
         if inner.prev_height == 0 && frame.lines.is_empty() {
             return;
         }
+        writer::write(SYNC_BEGIN);
         inner.erase_active();
         inner.draw_active(Some(frame));
+        writer::write(SYNC_END);
     }
 
     /// Redraw the active zone with the current render function.
@@ -314,8 +297,10 @@ impl Layout {
         if inner.prev_height == 0 && frame.lines.is_empty() {
             return;
         }
+        writer::write(SYNC_BEGIN);
         inner.erase_active();
         inner.draw_active(Some(frame));
+        writer::write(SYNC_END);
     }
 
     /// Write raw data into the output zone. Buffers until a newline is seen,
@@ -342,19 +327,15 @@ impl Layout {
         inner.write_buffer = remainder;
 
         let frame = inner.render_fn.as_mut().map(|rf| rf());
-        match &frame {
-            Some(f) if f.lines.is_empty() && inner.prev_height == 0 => {
-                writer::writeln(&complete);
-            }
-            None => {
-                writer::writeln(&complete);
-            }
-            _ => {
-                    inner.erase_active();
-                writer::writeln(&complete);
-                inner.draw_active(frame);
-                }
+        if frame.is_none() || (inner.prev_height == 0 && frame.as_ref().is_none_or(|f| f.lines.is_empty())) {
+            writer::writeln(&complete);
+            return;
         }
+        writer::write(SYNC_BEGIN);
+        inner.erase_active();
+        writer::writeln(&complete);
+        inner.draw_active(frame);
+        writer::write(SYNC_END);
     }
 
     /// Close the layout. Erases the active zone, flushes any buffered text,
@@ -381,6 +362,7 @@ impl Layout {
         let has_buffered = !inner.write_buffer.is_empty();
 
         if has_active || has_buffered {
+            writer::write(SYNC_BEGIN);
         }
         inner.erase_active();
         if has_buffered {
@@ -391,6 +373,7 @@ impl Layout {
             writer::writeln(msg);
         }
         if has_active || has_buffered {
+            writer::write(SYNC_END);
         }
 
         inner.prev_height = 0;
@@ -593,19 +576,15 @@ impl LayoutPrint for LayoutPrinter {
         }
 
         let frame = inner.render_fn.as_mut().map(|rf| rf());
-        match &frame {
-            Some(f) if f.lines.is_empty() && inner.prev_height == 0 => {
-                writer::writeln(text);
-            }
-            None => {
-                writer::writeln(text);
-            }
-            _ => {
-                    inner.erase_active();
-                writer::writeln(text);
-                inner.draw_active(frame);
-                }
+        if frame.is_none() || (inner.prev_height == 0 && frame.as_ref().is_none_or(|f| f.lines.is_empty())) {
+            writer::writeln(text);
+            return;
         }
+        writer::write(SYNC_BEGIN);
+        inner.erase_active();
+        writer::writeln(text);
+        inner.draw_active(frame);
+        writer::write(SYNC_END);
     }
 }
 

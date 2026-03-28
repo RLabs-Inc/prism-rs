@@ -75,17 +75,37 @@ static HEAVY: BorderChars = BorderChars {
     cross: "╋",
 };
 
+/// Borderless — empty strings for all border characters.
+/// Used by `table()` to render aligned columns without box drawing.
+/// Headers get a thin separator line (spaces, not box chars).
+static NONE: BorderChars = BorderChars {
+    tl: "",
+    tr: "",
+    bl: "",
+    br: "",
+    h: " ",
+    v: " ",
+    lt: "",
+    rt: "",
+    tt: " ",
+    bt: " ",
+    cross: " ",
+};
+
 // ---------------------------------------------------------------------------
 // BorderStyle enum
 // ---------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum BorderStyle {
     #[default]
     Single,
     Double,
     Rounded,
     Heavy,
+    /// No borders — columns aligned with spaces only.
+    /// Use with `table()` for borderless data tables.
+    None,
 }
 
 impl BorderStyle {
@@ -95,7 +115,13 @@ impl BorderStyle {
             BorderStyle::Double => &DOUBLE,
             BorderStyle::Rounded => &ROUNDED,
             BorderStyle::Heavy => &HEAVY,
+            BorderStyle::None => &NONE,
         }
+    }
+
+    /// Whether this style has visible borders.
+    pub fn has_borders(&self) -> bool {
+        *self != BorderStyle::None
     }
 }
 

@@ -252,16 +252,16 @@ fn compute_row_layout(
             };
 
             let mut gaps = vec![0; n];
-            for i in 1..n {
-                gaps[i] = options.gap;
+            for g in gaps.iter_mut().skip(1) {
+                *g = options.gap;
             }
             (widths, gaps)
         }
         FlexAlign::Start => {
             let widths: Vec<usize> = row_blocks.iter().map(|b| b.width).collect();
             let mut gaps = vec![0; n];
-            for i in 1..n {
-                gaps[i] = options.gap;
+            for g in gaps.iter_mut().skip(1) {
+                *g = options.gap;
             }
             (widths, gaps)
         }
@@ -271,8 +271,8 @@ fn compute_row_layout(
             let left_pad = available.saturating_sub(used) / 2;
             let mut gaps = vec![0; n];
             gaps[0] = left_pad;
-            for i in 1..n {
-                gaps[i] = options.gap;
+            for g in gaps.iter_mut().skip(1) {
+                *g = options.gap;
             }
             (widths, gaps)
         }
@@ -283,8 +283,8 @@ fn compute_row_layout(
             let mut gaps = vec![0; n];
             if n > 1 {
                 let gap = remaining / (n - 1);
-                for i in 1..n {
-                    gaps[i] = gap.max(options.gap);
+                for g in gaps.iter_mut().skip(1) {
+                    *g = gap.max(options.gap);
                 }
             }
             (widths, gaps)
@@ -295,10 +295,7 @@ fn compute_row_layout(
             let remaining = available.saturating_sub(used);
             let slot_count = n + 1; // spaces: before first, between each, after last
             let gap = (remaining / slot_count).max(options.gap);
-            let mut gaps = vec![0; n];
-            for i in 0..n {
-                gaps[i] = gap;
-            }
+            let gaps = vec![gap; n];
             (widths, gaps)
         }
     }

@@ -120,59 +120,68 @@ impl LineEditor {
     }
 
     /// Move cursor one word to the left (skip spaces then non-spaces backward).
+    /// Uses char boundaries to avoid panics on multi-byte UTF-8.
     pub fn word_left(&mut self) {
         if self.cursor == 0 {
             return;
         }
-        let bytes = self.buffer.as_bytes();
-        let mut i = self.cursor;
+        // Collect char boundaries up to cursor
+        let indices: Vec<(usize, char)> = self.buffer[..self.cursor].char_indices().collect();
+        let mut pos = indices.len();
         // skip spaces backward
-        while i > 0 && bytes[i - 1] == b' ' {
-            i -= 1;
+        while pos > 0 && indices[pos - 1].1 == ' ' {
+            pos -= 1;
         }
         // skip non-spaces backward
-        while i > 0 && bytes[i - 1] != b' ' {
-            i -= 1;
+        while pos > 0 && indices[pos - 1].1 != ' ' {
+            pos -= 1;
         }
-        self.cursor = i;
+        self.cursor = if pos > 0 { indices[pos].0 } else { 0 };
         self.notify();
     }
 
     /// Move cursor one word to the right (skip non-spaces then spaces forward).
+    /// Uses char boundaries to avoid panics on multi-byte UTF-8.
     pub fn word_right(&mut self) {
         if self.cursor >= self.buffer.len() {
             return;
         }
-        let bytes = self.buffer.as_bytes();
-        let mut i = self.cursor;
+        let indices: Vec<(usize, char)> = self.buffer[self.cursor..].char_indices().collect();
+        let mut pos = 0;
         // skip non-spaces forward
-        while i < bytes.len() && bytes[i] != b' ' {
-            i += 1;
+        while pos < indices.len() && indices[pos].1 != ' ' {
+            pos += 1;
         }
         // skip spaces forward
-        while i < bytes.len() && bytes[i] == b' ' {
-            i += 1;
+        while pos < indices.len() && indices[pos].1 == ' ' {
+            pos += 1;
         }
-        self.cursor = i;
+        self.cursor = if pos < indices.len() {
+            self.cursor + indices[pos].0
+        } else {
+            self.buffer.len()
+        };
         self.notify();
     }
 
     /// Delete the word before the cursor (Ctrl+W).
+    /// Uses char boundaries to avoid panics on multi-byte UTF-8.
     pub fn delete_word(&mut self) {
         if self.cursor == 0 {
             return;
         }
         let start = self.cursor;
-        let bytes = self.buffer.as_bytes();
-        let mut i = self.cursor;
-        while i > 0 && bytes[i - 1] == b' ' {
-            i -= 1;
+        let indices: Vec<(usize, char)> = self.buffer[..self.cursor].char_indices().collect();
+        let mut pos = indices.len();
+        while pos > 0 && indices[pos - 1].1 == ' ' {
+            pos -= 1;
         }
-        while i > 0 && bytes[i - 1] != b' ' {
-            i -= 1;
+        while pos > 0 && indices[pos - 1].1 != ' ' {
+            pos -= 1;
         }
-        self.buffer.drain(i..start);
-        self.cursor = i;
+        let byte_start = if pos > 0 { indices[pos].0 } else { 0 };
+        self.buffer.drain(byte_start..start);
+        self.cursor = byte_start;
         self.notify();
     }
 
@@ -221,6 +230,13 @@ impl LineEditor {
         self.saved_line.clear();
         self.notify();
         line
+    }
+
+    /// Truncate history to max entries
+    pub fn truncate_history(&mut self, max: usize) {
+        if self.history.len() > max {
+            self.history.truncate(max);
+        }
     }
 
     /// Navigate to the previous (older) history entry.

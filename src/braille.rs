@@ -34,8 +34,8 @@ pub fn grid_to_braille(grid: &[Vec<bool>]) -> String {
         return String::new();
     }
 
-    let char_rows = (height + 3) / 4;
-    let char_cols = (width + 1) / 2;
+    let char_rows = height.div_ceil(4);
+    let char_cols = width.div_ceil(2);
 
     let pixel = |x: usize, y: usize| -> bool {
         if y < grid.len() && x < grid[y].len() {
@@ -73,7 +73,7 @@ pub fn grid_to_braille(grid: &[Vec<bool>]) -> String {
     }
 
     // Remove trailing empty lines
-    while lines.last().map_or(false, |l| l.is_empty()) {
+    while lines.last().is_some_and(|l| l.is_empty()) {
         lines.pop();
     }
 
@@ -119,7 +119,7 @@ where
 {
     let grid: Vec<Vec<bool>> = art
         .iter()
-        .map(|line| line.chars().map(|ch| is_on(ch)).collect())
+        .map(|line| line.chars().map(&is_on).collect())
         .collect();
     grid_to_braille(&grid)
 }

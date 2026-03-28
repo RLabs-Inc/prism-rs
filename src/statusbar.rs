@@ -116,6 +116,110 @@ pub fn statusbar_render(config: &StatusBarConfig, total_width: usize) -> String 
     )
 }
 
+/// Render a status bar that wraps to multiple lines when content doesn't fit.
+///
+/// Returns a `Vec<String>` where each element is one line. The right-aligned
+/// segment always appears on the first line. If left segments overflow, they
+/// wrap to subsequent lines with the same indent and separator style.
+///
+/// This is the preferred rendering function when the status bar content may
+/// exceed terminal width — instead of truncating with "…", the content flows
+/// to the next line so no information is lost.
+pub fn statusbar_render_wrapped(config: &StatusBarConfig, total_width: usize) -> Vec<String> {
+    let indent = config.indent.unwrap_or(2);
+    let separator = config.separator.as_deref().unwrap_or(" \u{2502} "); // " │ "
+    let sep_width = measure_width(separator);
+    let sep_color: fn(&str) -> String = config.separator_color.unwrap_or(|t| s().dim().render(t));
+    let styled_sep = sep_color(separator);
+    let pad = " ".repeat(indent);
+
+    // Resolve all segments
+    let left_resolved: Vec<String> = config.left.iter().map(|seg| seg.resolve()).collect();
+    let left_widths: Vec<usize> = left_resolved.iter().map(|s| measure_width(s)).collect();
+
+    let right_str = config.right.as_ref().map(|seg| seg.resolve()).unwrap_or_default();
+    let right_width = measure_width(&right_str);
+
+    let available_width = total_width.saturating_sub(indent);
+
+    // Try single-line first
+    let total_left_width: usize = left_widths.iter().sum::<usize>()
+        + if left_widths.len() > 1 { (left_widths.len() - 1) * sep_width } else { 0 };
+    let total_needed = total_left_width + if right_width > 0 { 1 + right_width } else { 0 };
+
+    if total_needed <= available_width {
+        // Fits in one line — use standard render
+        return vec![statusbar_render(config, total_width)];
+    }
+
+    // Multi-line: greedily pack segments into lines
+    let mut lines = Vec::new();
+    let mut current_parts: Vec<String> = Vec::new();
+    let mut current_width: usize = 0;
+
+    // First line reserves space for right segment
+    let first_line_max = if right_width > 0 {
+        available_width.saturating_sub(right_width + 1)
+    } else {
+        available_width
+    };
+    let mut line_max = first_line_max;
+
+    for (i, seg) in left_resolved.iter().enumerate() {
+        let seg_width = left_widths[i];
+        let with_sep = if current_parts.is_empty() { seg_width } else { sep_width + seg_width };
+
+        if current_width + with_sep > line_max && !current_parts.is_empty() {
+            // Flush current line
+            let left_str = current_parts.join(&styled_sep);
+            let left_w = measure_width(&left_str);
+
+            if lines.is_empty() && !right_str.is_empty() {
+                // First line with right alignment
+                let fill = available_width.saturating_sub(left_w + right_width).max(1);
+                lines.push(format!("{}{}{}{}", pad, left_str, " ".repeat(fill), right_str));
+            } else {
+                lines.push(format!("{}{}", pad, left_str));
+            }
+
+            current_parts.clear();
+            current_width = 0;
+            line_max = available_width; // subsequent lines get full width
+        }
+
+        if !current_parts.is_empty() {
+            current_width += sep_width;
+        }
+        current_parts.push(seg.clone());
+        current_width += seg_width;
+    }
+
+    // Flush remaining
+    if !current_parts.is_empty() {
+        let left_str = current_parts.join(&styled_sep);
+        let left_w = measure_width(&left_str);
+
+        if lines.is_empty() && !right_str.is_empty() {
+            let fill = available_width.saturating_sub(left_w + right_width).max(1);
+            lines.push(format!("{}{}{}{}", pad, left_str, " ".repeat(fill), right_str));
+        } else {
+            lines.push(format!("{}{}", pad, left_str));
+        }
+    }
+
+    // If right segment wasn't placed yet (all segments fit on first line somehow)
+    if lines.is_empty() {
+        if !right_str.is_empty() {
+            let fill = available_width.saturating_sub(right_width).max(1);
+            lines.push(format!("{}{}{}", pad, " ".repeat(fill), right_str));
+        } else {
+            lines.push(pad);
+        }
+    }
+
+    lines
+}
+
 /// Plain-text rendering for non-TTY output (no styling, no fill).
 fn statusbar_plain(config: &StatusBarConfig) -> String {
     let indent = config.indent.unwrap_or(2);

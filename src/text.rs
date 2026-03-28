@@ -3,6 +3,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::ansi::{measure_width, strip_ansi, wrap_ansi};
 use crate::style::RESET;
 use crate::unicode::grapheme_segments;
+use crate::writer::ansi_enabled;
 
 /// Truncate `text` to at most `width` visible columns, appending `ellipsis` when truncated.
 ///
@@ -86,12 +87,17 @@ pub fn truncate(text: &str, width: usize, ellipsis: &str) -> String {
             if visible_width + cw > target_width {
                 // We've reached the truncation point
                 result.push_str(&plain[..consumed_bytes]);
-                let reset = if has_ansi || result.contains('\x1b') {
+                let base = if ansi_enabled() {
+                    result
+                } else {
+                    strip_ansi(&result)
+                };
+                let reset = if ansi_enabled() && (has_ansi || base.contains('\x1b')) {
                     RESET
                 } else {
                     ""
                 };
-                return result + reset + ellipsis;
+                return base + reset + ellipsis;
             }
             visible_width += cw;
             consumed_bytes += seg.segment.len();
@@ -107,12 +113,17 @@ pub fn truncate(text: &str, width: usize, ellipsis: &str) -> String {
 
     // Consumed all text (shouldn't normally reach here given the measure_width check at top,
     // but handle gracefully)
-    let reset = if has_ansi || result.contains('\x1b') {
+    let base = if ansi_enabled() {
+        result
+    } else {
+        strip_ansi(&result)
+    };
+    let reset = if ansi_enabled() && (has_ansi || base.contains('\x1b')) {
         RESET
     } else {
         ""
     };
-    result + reset + ellipsis
+    base + reset + ellipsis
 }
 
 /// Indent every line of `text` by `level` repetitions of `char_str`.

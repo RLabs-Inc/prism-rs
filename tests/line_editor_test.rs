@@ -395,18 +395,17 @@ fn state_returns_snapshot() {
 
 #[test]
 fn on_render_fires_on_mutation() {
-    use std::cell::RefCell;
-    use std::rc::Rc;
+    use std::sync::{Arc, Mutex};
 
-    let count = Rc::new(RefCell::new(0u32));
+    let count = Arc::new(Mutex::new(0u32));
     let count_clone = count.clone();
 
     let mut ed = LineEditor::with_on_render(Box::new(move |_state: &LineEditorState| {
-        *count_clone.borrow_mut() += 1;
+        *count_clone.lock().unwrap() += 1;
     }));
 
     ed.insert_char("a");
     ed.insert_char("b");
     ed.backspace();
-    assert_eq!(*count.borrow(), 3);
+    assert_eq!(*count.lock().unwrap(), 3);
 }

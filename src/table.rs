@@ -176,14 +176,17 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
         .collect();
 
     // --- 5. Shrink columns to fit max_width ---
-    // Total visible width = sum(col_widths) + (ncols+1) borders + 2 spaces padding per col
-    // Each column contributes: 1 (left border) + 1 space + width + 1 space
-    // Plus 1 final border on the right.
-    // Total = 1 + sum(col_widths + 2) + 1 = sum(col_widths) + ncols*2 + 2
     let ncols = col_widths.len();
-    // overhead = (ncols + 1) border chars + ncols * 2 padding spaces
-    //          = ncols + 1 + ncols * 2 = 3*ncols + 1
-    let overhead = 3 * ncols + 1;
+    let borderless = !opts.border.has_borders();
+
+    // Overhead calculation depends on border mode:
+    // Bordered:   (ncols + 1) border chars + ncols * 2 padding spaces = 3*ncols + 1
+    // Borderless: (ncols - 1) separator spaces + ncols * 2 padding spaces = 3*ncols - 1
+    let overhead = if borderless {
+        3 * ncols - 1
+    } else {
+        3 * ncols + 1
+    };
 
     // Iteratively shrink the widest column until we fit
     while col_widths.iter().sum::<usize>() + overhead > opts.max_width {
@@ -288,29 +291,70 @@ pub fn table(data: &[Vec<(&str, &str)>], opts: &TableOptions) -> String {
     // --- 7. Assemble the table ---
     let mut out = String::new();
 
-    // Top border
-    out.push_str(&top_border);
+    if borderless {
+        // Borderless mode: header + thin separator + data rows, no box borders
+        let render_borderless_row = |cells: &[String], aligns: &[Align]| -> String {
+            let mut line = String::new();
+            for ci in 0..ncols {
+                let w = col_widths[ci];
+                let cell = &cells[ci];
+                let truncated = truncate(cell, w, "…");
+                let padded = align_text(&truncated, w, aligns[ci]);
+                if ci > 0 {
+                    line.push_str("  "); // 2-space column separator
+                }
+                line.push_str(&padded);
+            }
+            line.push('\n');
+            line
+        };
 
-    // Header row — bold labels
-    let header_cells: Vec<String> = labels.iter().map(|label| s().bold().paint(label)).collect();
-    let header_aligns: Vec<Align> = columns.iter().map(|_| Align::Left).collect();
-    out.push_str(&render_row(&header_cells, &header_aligns));
+        // Header row — bold+dim labels
+        let header_cells: Vec<String> = labels.iter().map(|label| s().bold().dim().paint(label)).collect();
+        let header_aligns: Vec<Align> = columns.iter().map(|_| Align::Left).collect();
+        out.push_str(&render_borderless_row(&header_cells, &header_aligns));
 
-    // Header separator
-    out.push_str(&header_sep);
+        // Thin separator line (─ characters spanning full width)
+        let total_vis = col_widths.iter().sum::<usize>() + (ncols - 1) * 2;
+        out.push_str(&"─".repeat(total_vis));
+        out.push('\n');
 
-    // Data rows
-    let data_aligns: Vec<Align> = columns.iter().map(|c| c.align).collect();
-    for ri in 0..data.len() {
-        let cells: Vec<String> = columns
-            .iter()
-            .map(|col| cell_value(ri, &col.key).to_string())
-            .collect();
-        out.push_str(&render_row(&cells, &data_aligns));
+        // Data rows
+        let data_aligns: Vec<Align> = columns.iter().map(|c| c.align).collect();
+        for ri in 0..data.len() {
+            let cells: Vec<String> = columns
+                .iter()
+                .map(|col| cell_value(ri, &col.key).to_string())
+                .collect();
+            out.push_str(&render_borderless_row(&cells, &data_aligns));
+        }
+    } else {
+        // Bordered mode: full box drawing
+
+        // Top border
+        out.push_str(&top_border);
+
+        // Header row — bold labels
+        let header_cells: Vec<String> = labels.iter().map(|label| s().bold().paint(label)).collect();
+        let header_aligns: Vec<Align> = columns.iter().map(|_| Align::Left).collect();
+        out.push_str(&render_row(&header_cells, &header_aligns));
+
+        // Header separator
+        out.push_str(&header_sep);
+
+        // Data rows
+        let data_aligns: Vec<Align> = columns.iter().map(|c| c.align).collect();
+        for ri in 0..data.len() {
+            let cells: Vec<String> = columns
+                .iter()
+                .map(|col| cell_value(ri, &col.key).to_string())
+                .collect();
+            out.push_str(&render_row(&cells, &data_aligns));
+        }
+
+        // Bottom border
+        out.push_str(&bottom_border);
     }
-
-    // Bottom border
-    out.push_str(&bottom_border);
 
     out
 }

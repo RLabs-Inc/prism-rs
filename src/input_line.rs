@@ -17,7 +17,7 @@ pub struct InputLineOptions {
     /// Prompt string or function for dynamic prompts
     pub prompt: PromptSource,
     /// Prompt color function (default: cyan)
-    pub prompt_color: Box<dyn Fn(&str) -> String + Send>,
+    pub prompt_color: Box<dyn Fn(&str) -> String + Send + Sync>,
     /// Shared history (passed to line editor)
     pub history: Vec<String>,
     /// Max history entries
@@ -29,7 +29,7 @@ pub struct InputLineOptions {
 /// Either a static string or a closure that returns a prompt
 pub enum PromptSource {
     Static(String),
-    Dynamic(Box<dyn Fn() -> String + Send>),
+    Dynamic(Box<dyn Fn() -> String + Send + Sync>),
 }
 
 impl PromptSource {
@@ -57,8 +57,9 @@ impl Default for InputLineOptions {
 pub struct InputLine {
     editor: LineEditor,
     prompt: PromptSource,
-    prompt_color: Box<dyn Fn(&str) -> String + Send>,
+    prompt_color: Box<dyn Fn(&str) -> String + Send + Sync>,
     mask: Option<String>,
+    history_size: Option<usize>,
 }
 
 impl InputLine {
@@ -69,6 +70,7 @@ impl InputLine {
             prompt: options.prompt,
             prompt_color: options.prompt_color,
             mask: options.mask,
+            history_size: options.history_size,
         }
     }
 
@@ -122,9 +124,13 @@ impl InputLine {
         self.editor.history_down();
     }
 
-    /// Submit: return buffer, add to history, reset state
+    /// Submit: return buffer, add to history, enforce history_size, reset state
     pub fn submit(&mut self) -> String {
-        self.editor.submit()
+        let result = self.editor.submit();
+        if let Some(max) = self.history_size {
+            self.editor.truncate_history(max);
+        }
+        result
     }
 
     /// Render input line with prompt — returns lines + cursor position for liveBlock
@@ -134,14 +140,14 @@ impl InputLine {
         let prompt_width = measure_width(&raw_prompt);
 
         let display = match &self.mask {
-            Some(mask) => mask.repeat(self.editor.buffer().len()),
+            Some(mask) => mask.repeat(self.editor.buffer().chars().count()),
             None => self.editor.buffer().to_string(),
         };
 
         let line = format!("{}{}", styled_prompt, display);
 
         let cursor_display = match &self.mask {
-            Some(mask) => mask.repeat(self.editor.cursor()),
+            Some(mask) => mask.repeat(self.editor.buffer()[..self.editor.cursor()].chars().count()),
             None => self.editor.buffer()[..self.editor.cursor()].to_string(),
         };
         let cursor_col = prompt_width + measure_width(&cursor_display);

@@ -644,7 +644,7 @@ pub fn highlight_line(
                 *in_multiline_string = false;
                 // emit everything up to and including the backtick as string
                 let s_text: String = chars[..=j].iter().collect();
-                out.push_str(&s().cyan().paint(&s_text));
+                out.push_str(&s().green().paint(&s_text));
                 i = j + 1;
                 break;
             }
@@ -652,7 +652,7 @@ pub fn highlight_line(
         }
         if *in_multiline_string {
             // whole line is inside string
-            out.push_str(&s().cyan().paint(line));
+            out.push_str(&s().green().paint(line));
             return out;
         }
     }
@@ -720,7 +720,7 @@ pub fn highlight_line(
                     break;
                 }
             }
-            out.push_str(&s().cyan().paint(&string_buf));
+            out.push_str(&s().green().paint(&string_buf));
             continue;
         }
 

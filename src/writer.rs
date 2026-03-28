@@ -26,6 +26,11 @@ pub fn term_width() -> u16 {
     crossterm::terminal::size().map(|(w, _)| w).unwrap_or(80)
 }
 
+/// Terminal height in rows (default 24)
+pub fn term_height() -> u16 {
+    crossterm::terminal::size().map(|(_, h)| h).unwrap_or(24)
+}
+
 /// Write raw text to stdout (no newline). Panics on write failure (same as println!).
 pub fn write(text: &str) {
     let mut stdout = io::stdout().lock();

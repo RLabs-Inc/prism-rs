@@ -1,11 +1,21 @@
 [package]
-name = "prism"
+name = "prism-cli"
 version = "0.1.0"
 edition = "2021"
 description = "CLI primitives for hackers — light through a prism, data through the terminal"
 license = "MIT"
+authors = ["Rodrigo Araujo <rodrigo@rlabs.art>"]
+repository = "https://github.com/RLabs-Inc/prism-rs"
+homepage = "https://github.com/RLabs-Inc/prism-rs"
+keywords = ["cli", "terminal", "tui", "ansi", "repl"]
+categories = ["command-line-interface", "command-line-utilities"]
+readme = "README.md"
+
+[lib]
+name = "prism"
 
 [dependencies]
 crossterm = "0.28"
+libc = "0.2"
 unicode-width = "0.2"
 unicode-segmentation = "1.12"

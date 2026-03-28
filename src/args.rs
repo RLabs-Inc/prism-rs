@@ -413,8 +413,33 @@ pub fn args(config: ArgsConfig) -> ArgsResult {
                             flags.insert(name, FlagValue::String(argv[i].clone()));
                         }
                     }
-                    _ => {
+                    Some(FlagType::Boolean) => {
                         flags.insert(name, FlagValue::Boolean(true));
+                    }
+                    None => {
+                        // Unknown long flag — error
+                        eprintln!(
+                            "{} Unknown flag: {}",
+                            s().red().paint("\u{2717}"),
+                            s().bold().paint(&format!("--{}", name))
+                        );
+                        eprintln!(
+                            "{}",
+                            s().dim().paint(&format!(
+                                "  Run '{} --help' for usage.",
+                                config.name
+                            ))
+                        );
+                        if !config.no_exit {
+                            std::process::exit(1);
+                        }
+                        return ArgsResult {
+                            command: None,
+                            flags,
+                            args: positionals,
+                            config,
+                            command_def: None,
+                        };
                     }
                 }
             }
@@ -442,8 +467,29 @@ pub fn args(config: ArgsConfig) -> ArgsResult {
                         }
                     }
                 } else {
-                    // Unknown short flag — treat as boolean
-                    flags.insert(c.to_string(), FlagValue::Boolean(true));
+                    // Unknown short flag — error
+                    eprintln!(
+                        "{} Unknown flag: {}",
+                        s().red().paint("\u{2717}"),
+                        s().bold().paint(&format!("-{}", c))
+                    );
+                    eprintln!(
+                        "{}",
+                        s().dim().paint(&format!(
+                            "  Run '{} --help' for usage.",
+                            config.name
+                        ))
+                    );
+                    if !config.no_exit {
+                        std::process::exit(1);
+                    }
+                    return ArgsResult {
+                        command: None,
+                        flags,
+                        args: positionals,
+                        config,
+                        command_def: None,
+                    };
                 }
             }
         } else {

@@ -21,7 +21,7 @@ pub fn format_number(n: u64) -> String {
     let mut result = String::with_capacity(len + len / 3);
 
     for (i, &b) in bytes.iter().enumerate() {
-        if i > 0 && (len - i) % 3 == 0 {
+        if i > 0 && (len - i).is_multiple_of(3) {
             result.push(',');
         }
         result.push(b as char);
@@ -47,8 +47,6 @@ pub fn format_compact(n: u64) -> String {
         let v = n as f64 / 1_000.0;
         return if v >= 100.0 {
             format!("{:.0}K", v)
-        } else if v >= 10.0 {
-            format!("{:.1}K", v)
         } else {
             format!("{:.1}K", v)
         };
@@ -57,8 +55,6 @@ pub fn format_compact(n: u64) -> String {
         let v = n as f64 / 1_000_000.0;
         return if v >= 100.0 {
             format!("{:.0}M", v)
-        } else if v >= 10.0 {
-            format!("{:.1}M", v)
         } else {
             format!("{:.1}M", v)
         };
@@ -67,8 +63,6 @@ pub fn format_compact(n: u64) -> String {
         let v = n as f64 / 1_000_000_000.0;
         return if v >= 100.0 {
             format!("{:.0}G", v)
-        } else if v >= 10.0 {
-            format!("{:.1}G", v)
         } else {
             format!("{:.1}G", v)
         };
@@ -76,8 +70,6 @@ pub fn format_compact(n: u64) -> String {
     let v = n as f64 / 1_000_000_000_000.0;
     if v >= 100.0 {
         format!("{:.0}T", v)
-    } else if v >= 10.0 {
-        format!("{:.1}T", v)
     } else {
         format!("{:.1}T", v)
     }
@@ -117,8 +109,6 @@ pub fn format_bytes(bytes: u64) -> String {
         let v = bytes as f64 / 1_024.0;
         return if v >= 100.0 {
             format!("{:.0} KB", v)
-        } else if v >= 10.0 {
-            format!("{:.1} KB", v)
         } else {
             format!("{:.1} KB", v)
         };
@@ -127,8 +117,6 @@ pub fn format_bytes(bytes: u64) -> String {
         let v = bytes as f64 / 1_048_576.0;
         return if v >= 100.0 {
             format!("{:.0} MB", v)
-        } else if v >= 10.0 {
-            format!("{:.1} MB", v)
         } else {
             format!("{:.1} MB", v)
         };
@@ -136,8 +124,6 @@ pub fn format_bytes(bytes: u64) -> String {
     let v = bytes as f64 / 1_073_741_824.0;
     if v >= 100.0 {
         format!("{:.0} GB", v)
-    } else if v >= 10.0 {
-        format!("{:.1} GB", v)
     } else {
         format!("{:.1} GB", v)
     }

@@ -1,12 +1,20 @@
 // prism/keypress — raw keyboard input
 // reads individual keypresses without waiting for Enter
 // foundation for prompt, select, and interactive components
+//
+// Uses libc termios directly for raw mode instead of crossterm::terminal.
+// Reason: crossterm's enable_raw_mode() calls cfmakeraw() which clears OPOST,
+// disabling output \n → \r\n translation. This breaks all terminal rendering.
+// We only set raw INPUT flags, preserving output processing — matching how
+// Node/Bun's setRawMode(true) works in the TypeScript original.
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent as CtKeyEvent, KeyEventKind, KeyModifiers};
-use crossterm::terminal;
+use std::os::unix::io::AsRawFd;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::OnceLock;
 
 static RAW_MODE_REFS: AtomicUsize = AtomicUsize::new(0);
+static ORIGINAL_TERMIOS: OnceLock<libc::termios> = OnceLock::new();
 
 /// A parsed keyboard event
 #[derive(Debug, Clone)]
@@ -92,22 +100,52 @@ fn from_crossterm(ct: &CtKeyEvent) -> KeyEvent {
     }
 }
 
+/// Save original termios and enable raw INPUT mode.
+/// Preserves OPOST so \n → \r\n translation works on output.
+fn enable_raw_input() {
+    let fd = std::io::stdin().as_raw_fd();
+    let mut termios = unsafe { std::mem::zeroed::<libc::termios>() };
+    unsafe { libc::tcgetattr(fd, &mut termios) };
+    ORIGINAL_TERMIOS.get_or_init(|| termios);
+
+    // Raw INPUT only — matches Node/Bun's setRawMode(true)
+    termios.c_iflag &= !(libc::BRKINT | libc::ICRNL | libc::INPCK | libc::ISTRIP | libc::IXON);
+    termios.c_cflag |= libc::CS8;
+    termios.c_lflag &= !(libc::ECHO | libc::ICANON | libc::IEXTEN | libc::ISIG);
+    // DO NOT touch c_oflag — OPOST stays on, \n → \r\n works naturally
+    termios.c_cc[libc::VMIN] = 0;
+    termios.c_cc[libc::VTIME] = 0;
+
+    unsafe { libc::tcsetattr(fd, libc::TCSAFLUSH, &termios) };
+}
+
+/// Restore original terminal settings.
+fn disable_raw_input() {
+    if let Some(original) = ORIGINAL_TERMIOS.get() {
+        let fd = std::io::stdin().as_raw_fd();
+        unsafe { libc::tcsetattr(fd, libc::TCSAFLUSH, original) };
+    }
+}
+
 /// Enable or disable raw mode with reference counting.
 /// First enable turns on raw mode, last disable turns it off.
 pub fn raw_mode(enable: bool) {
     if enable {
         let prev = RAW_MODE_REFS.fetch_add(1, Ordering::SeqCst);
         if prev == 0 {
-            let _ = terminal::enable_raw_mode();
+            enable_raw_input();
         }
     } else {
-        let prev = RAW_MODE_REFS.load(Ordering::SeqCst);
-        if prev == 0 {
-            return;
-        }
-        let prev = RAW_MODE_REFS.fetch_sub(1, Ordering::SeqCst);
-        if prev == 1 {
-            let _ = terminal::disable_raw_mode();
+        // CAS loop to avoid TOCTOU race
+        let _ = RAW_MODE_REFS.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |current| {
+            if current == 0 {
+                None // don't underflow
+            } else {
+                Some(current - 1)
+            }
+        });
+        if RAW_MODE_REFS.load(Ordering::SeqCst) == 0 {
+            disable_raw_input();
         }
     }
 }
@@ -115,7 +153,7 @@ pub fn raw_mode(enable: bool) {
 /// Reset raw mode ref count and disable (for panic recovery)
 pub fn raw_mode_reset() {
     RAW_MODE_REFS.store(0, Ordering::SeqCst);
-    let _ = terminal::disable_raw_mode();
+    disable_raw_input();
 }
 
 /// Read a single keypress. Blocks until a key is pressed.

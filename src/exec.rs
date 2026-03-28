@@ -126,6 +126,7 @@ impl Exec {
             BorderStyle::Heavy => ("┏", "┓", "┗", "┛", "━", "┃"),
             BorderStyle::Double => ("╔", "╗", "╚", "╝", "═", "║"),
             BorderStyle::Single => ("┌", "┐", "└", "┘", "─", "│"),
+            BorderStyle::None => (" ", " ", " ", " ", " ", " "),
         }
     }
 
