@@ -8,7 +8,7 @@ A comprehensive Rust library for building interactive command-line applications.
 
 ```toml
 [dependencies]
-prism-cli = "0.1"
+rlabs-prism = "0.1"
 ```
 
 ## Philosophy
@@ -59,7 +59,7 @@ Two-zone `Layout` with output zone + pinned status bar. `LiveBlock` for atomic r
 ## Quick Example
 
 ```rust
-use prism_cli::{s, table, Column, Align, TableOptions, frame, FrameOptions, BorderStyle};
+use prism::{s, table, Column, Align, TableOptions, frame, FrameOptions, BorderStyle};
 
 // Styled text
 let title = s().bold().cyan().paint("scan results");

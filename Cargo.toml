@@ -1,5 +1,5 @@
 [package]
-name = "prism-cli"
+name = "rlabs-prism"
 version = "0.1.0"
 edition = "2021"
 description = "CLI primitives for hackers — light through a prism, data through the terminal"
