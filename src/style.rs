@@ -66,6 +66,12 @@ impl Style {
     pub fn strikethrough(self) -> Self {
         self.push("\x1b[9m", "\x1b[29m")
     }
+    /// Blink (`\x1b[5m` / `\x1b[25m`). Many terminals suppress blink, so callers
+    /// that need a guaranteed hard-break flash should also compose a frame-toggle
+    /// fallback rather than relying on this alone.
+    pub fn blink(self) -> Self {
+        self.push("\x1b[5m", "\x1b[25m")
+    }
 
     // Foreground ANSI 16 (terminal-themed)
     pub fn black(self) -> Self {
@@ -201,4 +207,65 @@ pub fn color(text: &str, fg: Color, bg: Option<Color>) -> String {
     }
     result.push_str("\x1b[39m");
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── blink() — the hard-break flash atom ─────────────────────────────────
+
+    #[test]
+    fn blink_render_emits_open_and_close() {
+        assert_eq!(s().blink().render("x"), "\x1b[5mx\x1b[25m");
+    }
+
+    #[test]
+    fn blink_paint_strips_when_ansi_off() {
+        // Tests run with stdout not a TTY → paint() must drop the codes.
+        if ansi_enabled() {
+            return;
+        }
+        assert_eq!(s().blink().paint("x"), "x");
+    }
+
+    #[test]
+    fn blink_paint_and_render_differ_when_ansi_off() {
+        if ansi_enabled() {
+            return;
+        }
+        let st = s().blink();
+        assert!(st.render("x").contains("\x1b[5m"));
+        assert!(!st.paint("x").contains("\x1b[5m"));
+    }
+
+    #[test]
+    fn blink_nests_with_color_lifo() {
+        // green() then blink(): opens append, closes prepend (LIFO).
+        assert_eq!(
+            s().green().blink().render("x"),
+            "\x1b[32m\x1b[5mx\x1b[25m\x1b[39m"
+        );
+    }
+
+    // ── Locked lab palette atoms (spec §2) ──────────────────────────────────
+
+    #[test]
+    fn palette_amber_is_bright_yellow() {
+        // AMBER ("our rig lied") is the bright-yellow channel — never plain yellow.
+        assert_eq!(s().bright_yellow().render("x"), "\x1b[93mx\x1b[39m");
+    }
+
+    #[test]
+    fn palette_break_greens_emit_expected_codes() {
+        // soft break = green, hard break = bright green.
+        assert_eq!(s().green().render("x"), "\x1b[32mx\x1b[39m");
+        assert_eq!(s().bright_green().render("x"), "\x1b[92mx\x1b[39m");
+    }
+
+    #[test]
+    fn palette_ambient_cyan_and_held_red() {
+        assert_eq!(s().cyan().render("x"), "\x1b[36mx\x1b[39m");
+        assert_eq!(s().red().render("x"), "\x1b[31mx\x1b[39m");
+    }
 }
